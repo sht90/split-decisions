@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon May  3 19:23:45 2021
-
 @author: Sam
 """
 
@@ -278,8 +277,8 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
         box.line([(xm,yn1),(xm,yn2)], outline_color, width) # middle line
         box.line([(x1,yn1),(x2,yn1)], outline_color, width) # top line
         
-        populate_box(box, xm - X_MOD_NS, yn1 + Y_MOD_NS, text[0].upper(), outline_color, FONT)
-        populate_box(box, xm + X_MOD_NS, yn1 + Y_MOD_NS, text[1].upper(), outline_color, FONT)
+        populate_box(box, xm + X_MOD_NS, yn1 + Y_MOD_NS, text[0].upper(), outline_color, FONT)
+        populate_box(box, xm - X_MOD_NS, yn1 + Y_MOD_NS, text[1].upper(), outline_color, FONT)
         
     elif open_dir == 1: # points east
         # color background first
@@ -410,4 +409,4 @@ for r in range(len(board)):
         draw_tile(board_im, board, r, c)
         
 # show board
-board_im.show()                  
+board_im.show()
