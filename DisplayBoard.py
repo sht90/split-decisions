@@ -8,19 +8,8 @@ Created on Mon May  3 19:23:45 2021
 
 
 """
-This is the second in a series of coding projects I want to make for Split Decisions
-Puzzles. I have some background on the puzzle in my first project, which would
-generate a word bank of viable Split Decisions word pairs using an input text
-file.
-
-This project intends to produce two images: a blank puzzle that could be played
-like any other Split Decisions Puzzle, and an answers guide to the same puzzle.
-
-This works by processing a txt file, constructing a list from that txt file,
-and then generating images based on that list.
-
-I tried using building blocks of screenshots of an existing split decisions puzzle,
-but the images were very grainy. I'm going to try to generate the images instead.
+Generate and display an image of a valid Split Decisions Board, imported from
+a text file.
 """
 
 # import
