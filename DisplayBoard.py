@@ -30,6 +30,11 @@ A_TO_C = math.floor(6 / (100 / TILE_SIDE_LENGTH)) # ascender height to cap heigh
                                                   # for Arial font, in pixels
 PATH = "../Documents"
 FILENAME = "SplitDecisionsBoard1.txt"
+# modifiers for placement of text within double-letter tiles. Tweaked from centroid calcs.
+X_MOD_EW = 0.6 * TILE_SIDE_LENGTH
+Y_MOD_EW = 0.2 * TILE_SIDE_LENGTH
+X_MOD_NS = 0.4 * TILE_SIDE_LENGTH
+Y_MOD_NS = 0.4 * TILE_SIDE_LENGTH
 
 # functions    
 def get_tile_type(tile):
@@ -245,12 +250,6 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
     by1 = y1
     by2 = yn1 + TILE_SIDE_LENGTH * (2 + a)
     
-    # for placing text, crunch these numbers
-    small_mid = (xm + xn1) / 2
-    large_mid = (xm + x1) / 2
-    mid_mid   = (small_mid + large_mid) / 2
-    mid_diff  = mid_mid - xm
-    
     if open_dir == 0: # points north
         # color background first
         box.rectangle([(xn1,yn1),(xm,yn2)], fill_color, None, width)
@@ -275,12 +274,12 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
         # finish all lines
         box.arc([(bx1,by1),(bx2,by2)], min(angles2), max(angles2), outline_color, width)
         
-        box.line([(xn1,yn2),(xn2,yn2)], outline_color, width) #  bottom line
+        box.line([(xn1,yn2),(xn2,yn2)], outline_color, width) # bottom line
         box.line([(xm,yn1),(xm,yn2)], outline_color, width) # middle line
         box.line([(x1,yn1),(x2,yn1)], outline_color, width) # top line
         
-        populate_box(box, xm - mid_diff, ym, text[0].upper(), outline_color, FONT)
-        populate_box(box, xm + mid_diff, ym, text[1].upper(), outline_color, FONT)
+        populate_box(box, xm - X_MOD_NS, yn1 + Y_MOD_NS, text[0].upper(), outline_color, FONT)
+        populate_box(box, xm + X_MOD_NS, yn1 + Y_MOD_NS, text[1].upper(), outline_color, FONT)
         
     elif open_dir == 1: # points east
         # color background first
@@ -304,10 +303,10 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
         box.arc([(bx1,by1),(bx2,by2)], min(angles2), max(angles2), outline_color, width)
         box.line([(xn1,yn1),(xn1,yn2)], outline_color, width) # left line
         box.line([(xn1,ym),(xn2,ym)], outline_color, width) # middle line
-        box.line([(xn2,y1),(xn2,y2)], outline_color, width) #  right line
+        box.line([(xn2,y1),(xn2,y2)], outline_color, width) # right line
         
-        populate_box(box, xm, ym - mid_diff, text[0].upper(), outline_color, FONT)
-        populate_box(box, xm, ym + mid_diff, text[1].upper(), outline_color, FONT)
+        populate_box(box, xn1 + X_MOD_EW, yn2 - Y_MOD_EW, text[0].upper(), outline_color, FONT)
+        populate_box(box, xn1 + X_MOD_EW, yn1 + Y_MOD_EW, text[1].upper(), outline_color, FONT)
         
     elif open_dir == 2: # points south
         # color background first
@@ -331,8 +330,8 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
         box.line([(xm,yn1),(xm,yn2)], outline_color, width) # middle line
         box.line([(x1,yn2),(x2,yn2)], outline_color, width) # bottom line
         
-        populate_box(box, xm - mid_diff, ym, text[0].upper(), outline_color, FONT)
-        populate_box(box, xm + mid_diff, ym, text[1].upper(), outline_color, FONT)
+        populate_box(box, xm + X_MOD_NS, yn2 - Y_MOD_NS, text[0].upper(), outline_color, FONT)
+        populate_box(box, xm - X_MOD_NS, yn2 - Y_MOD_NS, text[1].upper(), outline_color, FONT)
         
     elif open_dir == 3: # points west
         # color background first
@@ -354,8 +353,8 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
         box.line([(xn1,ym),(xn2,ym)], outline_color, width) # middle line
         box.line([(xn1,y1),(xn1,y2)], outline_color, width) # left line
         
-        populate_box(box, xm, ym - mid_diff, text[0].upper(), outline_color, FONT)
-        populate_box(box, xm, ym + mid_diff, text[1].upper(), outline_color, FONT)
+        populate_box(box, xn2 - X_MOD_EW, yn2 - Y_MOD_EW, text[0].upper(), outline_color, FONT)
+        populate_box(box, xn2 - X_MOD_EW, yn1 + Y_MOD_EW, text[1].upper(), outline_color, FONT)
 
     
 def draw_tile(board_image, board, r, c, show_answers = False):
