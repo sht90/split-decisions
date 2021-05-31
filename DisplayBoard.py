@@ -356,7 +356,6 @@ def draw_split_box(board_image, xn1, yn1, open_dir, text, fill_color = WHITE,
         populate_box(box, xn2 - X_MOD_EW, yn2 - Y_MOD_EW, text[0].upper(), outline_color, FONT)
         populate_box(box, xn2 - X_MOD_EW, yn1 + Y_MOD_EW, text[1].upper(), outline_color, FONT)
 
-    
 def draw_tile(board_image, board, r, c, show_answers = False):
     tt_num = get_tile_type_num(board[r][c])
     if tt_num == 0:
@@ -374,18 +373,32 @@ def draw_tile(board_image, board, r, c, show_answers = False):
     if tt_num == 2:
         draw_split_box(board_image, origin_col, origin_row, get_open_dir(board, r, c), board[r][c])
 
+def make_board(width, height, show_answers = False):
+    # make blank board
+    tot_width = (width + 2) * TILE_SIDE_LENGTH
+    tot_height = (height + 2) * TILE_SIDE_LENGTH
+    board_im = Image.new(mode = "RGB", size = (tot_width, tot_height), color = GRAY)
+    
+    # populate blank board
+    for r in range(len(board)):
+        for c in range(len(board[r])):
+            draw_tile(board_im, board, r, c, show_answers)
+    return board_im
 
 # main
     
-# assume side lengths are default...
-width  = DEFAULT_BOARD_WIDTH
-height = DEFAULT_BOARD_HEIGHT
-if len(sys.argv) == 3:  # ...unless otherwise told.
-            width  = sys.argv[1]
-            height = sys.argv[2]
-elif not len(sys.argv) <= 1:
-    print(sys.argv)
-    print("Invalid number of args. Using default dimensions instead.")
+# default values
+width     = DEFAULT_BOARD_WIDTH
+height    = DEFAULT_BOARD_HEIGHT
+save_name = ""
+if len(sys.argv) > 1 and len(sys.argv) <= 3:  # custom values from user
+    width     = sys.argv[1]
+    height    = sys.argv[2]
+elif len(sys.argv) == 4:
+    save_file = sys.argv[3]
+elif len(sys.argv) > 4:
+    print("Too many args. Exiting program")
+    sys.exit()
 
 # import board as list from file
 filename = PATH + "/" + FILENAME
@@ -398,16 +411,14 @@ for row in board_file:
 if not validate_board(board, height, width):
     print("Board is invalid. Exiting program.")
     sys.exit()
-
-# make blank board
-tot_width = (width + 2) * TILE_SIDE_LENGTH
-tot_height = (height + 2) * TILE_SIDE_LENGTH
-board_im = Image.new(mode = "RGB", size = (tot_width, tot_height), color = GRAY)
-
-# populate blank board
-for r in range(len(board)):
-    for c in range(len(board[r])):
-        draw_tile(board_im, board, r, c)
         
-# show board
-board_im.show()                  
+# make and show board
+board_im = make_board(width, height)
+board_im.show()
+
+if not save_name == "":
+    board_im.save(save_name)
+    # redo, with answers
+    answ_im = make_board(width, height, True)
+    answ_im.save(save_name + "_ANSWERS")
+    
