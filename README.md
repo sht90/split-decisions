@@ -1,11 +1,36 @@
 # split-decisions
 
-Split Decisions is a puzzle originally devised by George Bredehorn, and currently made almost exclusively by Fred Piscop.  
-Please see [his personal website](http://www.split-decisions.us/).
+## Purpose
 
-I love Split Decisions puzzles, and would like to create my own. This repository contains all resources that I make that are relevant to Split Decisions puzzles.
+Split Decisions is easily my favorite word puzzle, and one of my favorite puzzles in general. It was originally devised by George Bredehorn, and currently made almost exclusively by Fred Piscop. Please see [Mr. Piscop's personal website](http://www.split-decisions.us/) for more details about Split Decisions puzzles.
 
-For what it's worth, an additional motivator for me designing these puzzles is that I couldn't find a single author of Split Decisions puzzles who emphasized creating puzzles using plain English. Every Split Decisions author I could find seemed to have some preference towards difficult or obscure words. While I greatly appreciate and admire the work of Mr. Piscop and anyone else who designs these lovely puzzles, it's always been a nagging curiosity of mine -- would Split Decisions be more fun if I weren't stuck on a word that I genuinely didn't know? Or, further, would I be able to rely more heavily on logical deduction and general problem-solving if I were confident that I knew all the words? I hope to answer that.
+My ultimate goal with this repository is to be able to quickly and easily create my own Split Decisions puzzles -- whether to solve on my own, or to give to my friends.
 
-All code here is my own.  
+## Files
+
+### DisplayBoard.py
+
+Display a printable version of a complete Split Decisions puzzle.
+
+### Merge_txt_files.py
+
+Utility program to write the intersection of two input .txt files to a new .txt file output.
+
+### PopulateBoard.py
+
+Populate a skeleton of a Split Decisions board with words that would form a valid puzzle.
+
+### SplitDecisionsFinder.py
+
+Find all valid Split Decisions word pairs and print them to .txt file
+
+## Miscellaneous
+
+Many programs within this repository process large text files. I've opted to omit the large text files from this repository for now, but this is a list of every large text file that I've used or considered using:
+[10,000 most common words in the English Language](https://github.com/first20hours/google-10000-english)
+[Every word in the English Language](https://github.com/dwyl/english-words)
+[100,000 most common words in the English Language as of 2005](https://gist.github.com/h3xx/1976236)
+[Full Oxford Dictionary, including definitions](https://github.com/sujithps/Dictionary)
+
+All code inside this repository is my own.
 I do not claim the concept of Split Decisions as my own, nor do I generate any income from the contents of this repository.
