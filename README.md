@@ -6,7 +6,11 @@ Split Decisions is easily my favorite word puzzle, and one of my favorite puzzle
 
 My ultimate goal with this repository is to be able to quickly and easily create my own Split Decisions puzzles -- whether to solve on my own, or to give to my friends.
 
-## Files
+# Files
+
+## Outdated
+
+I first attempted this project a while ago. I don't want to delete some of my original attempts at Split Decisions, but I would much prefer to start over from a clean slate than to try to fit new solutions into old, disorganized code.
 
 ### DisplayBoard.py
 
