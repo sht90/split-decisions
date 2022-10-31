@@ -11,13 +11,14 @@ var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
 
 func main() {
-	/* This program is designed to do a complete Split Decisions Generation
-	 * workflow. I've broken this down into phases:
+	/* This program is designed to do a complete Split Decisions Puzzle
+	 * generation workflow. I've broken this down into phases:
 	 *   1. Find Split Decisions Word Pairs (SDWPs) from dictionary txts
 	 *   2. Find constraints for SDWPs
 	 *   3. Generate a board (or boards) using constrained SDWPs
 	 */
-
+	// Phase 1: Find SDWPs and store them in a SQL DB
+	findSDWPs("usable.txt", "reference.txt")
 }
 
 func findSDWPs(usableWordsFile string, referenceWordsFile string) {
