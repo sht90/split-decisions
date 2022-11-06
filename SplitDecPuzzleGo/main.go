@@ -2,13 +2,18 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"sort"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
+var db *sql.DB
 
 func main() {
 	/* This program is designed to do a complete Split Decisions Puzzle
@@ -18,7 +23,60 @@ func main() {
 	 *   3. Generate a board (or boards) using constrained SDWPs
 	 */
 	// Phase 1: Find SDWPs and store them in a SQL DB
+	// set up sql DB
+	dbUsername := ""
+	dbPassword := ""
+	dbUsername, dbPassword = parseSecretInfo("/Users/samtaylor/Documents/SQL_Secrets/sdwp_secrets.txt")
+	setupDB(dbUsername, dbPassword)
 	findSDWPs("usable.txt", "reference.txt")
+}
+
+func parseSecretInfo(secretsFile string) (dbUsername string, dbPassword string) {
+	// parse secret info (SQL username and DB) from a txt file
+	secretsList, err := os.Open(secretsFile)
+	// catch error
+	if err != nil {
+		log.Fatal(err)
+	}
+	// remember to close the file at the end of the program
+	defer secretsList.Close()
+	// read the file into an array of words, using the scanner
+	var secrets []string
+	scanner := bufio.NewScanner(secretsList)
+	for scanner.Scan() {
+		secrets = append(secrets, scanner.Text())
+	}
+	// catch errors with scanner
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	// parse secrets
+	dbUsername = secrets[0]
+	dbPassword = secrets[1]
+	return dbUsername, dbPassword
+}
+
+func setupDB(username string, password string) {
+	// DB is global so no need for params/returns
+	cfg := mysql.Config{
+		AllowNativePasswords: true,
+		User:                 username,
+		Passwd:               password,
+		Net:                  "tcp",
+		Addr:                 "127.0.0.1:3306",
+		DBName:               "splitDecGen",
+	}
+	// get database handle
+	var err error
+	db, err = sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		log.Fatal(err)
+	}
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+	}
+	fmt.Println("successful DB connection! Woohoo!")
 }
 
 func findSDWPs(usableWordsFile string, referenceWordsFile string) {
@@ -67,8 +125,12 @@ func popDBFromWordsArray(words [][]string) {
 }
 
 func uploadToDB(word1 string, word2 string) {
-
+	// do nothing except appease the compiler
 }
+
+/*func uploadToDB(word1 string, word2 string) (int64, error) {
+	result, err := db.Exec("INSERT INTO sdwps (t)")
+}*/
 
 func getWordsArrayFromFile(filename string) [][]string {
 	// Returns array of arrays of strings
