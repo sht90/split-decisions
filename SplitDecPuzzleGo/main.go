@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -14,6 +15,7 @@ import (
 var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
 var db *sql.DB
+var debug bool = true
 
 func main() {
 	/* This program is designed to do a complete Split Decisions Puzzle
@@ -28,7 +30,19 @@ func main() {
 	dbPassword := ""
 	dbUsername, dbPassword = parseSecretInfo("/Users/samtaylor/Documents/SQL_Secrets/sdwp_secrets.txt")
 	setupDB(dbUsername, dbPassword)
-	findSDWPs("usable.txt", "reference.txt")
+	findSDWPs("/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/HandTrimmedUsableDictionary.txt", "/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/dictionary.txt")
+	// check phase 1
+	rows, err := db.Query("SELECT * FROM sdwps")
+	if err != nil {
+		print("error when checking phase 1!")
+	}
+	defer rows.Close()
+	// Loop through rows, using Scan to assign column data to struct fields.
+	count := 0
+	for rows.Next() {
+		count++
+	}
+	fmt.Printf("final table has %d rows\n", count)
 }
 
 func parseSecretInfo(secretsFile string) (dbUsername string, dbPassword string) {
@@ -82,15 +96,38 @@ func setupDB(username string, password string) {
 func findSDWPs(usableWordsFile string, referenceWordsFile string) {
 	// Get SDWPs from words files
 	// first get words arrays from the words files
+	var start time.Time
+
 	usableWords := getWordsArrayFromFile(usableWordsFile)
 	referenceWords := getWordsArrayFromFile(referenceWordsFile)
-	popDBFromWordsArray(usableWords)
-	popDBFromWordsArray(referenceWords)
+	if debug {
+		fmt.Println("Getting SDWPS from reference words")
+		start = time.Now()
+	}
+	popDBFromWordsArray(referenceWords, false)
+	if debug {
+		elapsed := time.Since(start)
+		fmt.Printf("  In total, took %s\n", elapsed)
+	}
+	if debug {
+		fmt.Println("Getting SDWPs from usable words")
+		start = time.Now()
+	}
+	popDBFromWordsArray(usableWords, true)
+	if debug {
+		elapsed := time.Since(start)
+		fmt.Printf("  In total, took %s\n", elapsed)
+	}
 }
 
-func popDBFromWordsArray(words [][]string) {
+func popDBFromWordsArray(words [][]string, usable bool) {
 	// Traverse all words. First by length, then alphabetically
+	var start time.Time
 	for l := MIN_WORD_LENGTH; l <= MAX_WORD_LENGTH; l++ {
+		if debug {
+			fmt.Printf("  Parsing %d-letter words... ", l)
+			start = time.Now()
+		}
 		w := words[l-MIN_WORD_LENGTH]
 		for rot := 0; rot < l-1; rot++ {
 			for i := 0; i < len(w)-1; i++ {
@@ -107,7 +144,11 @@ func popDBFromWordsArray(words [][]string) {
 						// un-rotate words and add them to DB
 						tmpWord1 := w[i][rot:] + w[i][:rot]
 						tmpWord2 := w[j][rot:] + w[j][:rot]
-						uploadToDB(tmpWord1, tmpWord2)
+						if usable {
+							updateUsabilityDB(tmpWord1, tmpWord2)
+						} else {
+							uploadRefToDB(tmpWord1, tmpWord2, rot)
+						}
 					}
 					// if words have too many letters in common, this isn't
 					// a match, but w[i] might still have more matches later.
@@ -121,16 +162,49 @@ func popDBFromWordsArray(words [][]string) {
 				sort.Strings(w)
 			}
 		}
+		if debug {
+			elapsed := time.Since(start)
+			fmt.Printf("Took %s\n", elapsed)
+		}
 	}
 }
 
-func uploadToDB(word1 string, word2 string) {
-	// do nothing except appease the compiler
+func uploadRefToDB(word1 string, word2 string, rotation int) {
+	//Start by getting trivial information.
+	shapeLength := len(word1)
+	mistakesId := 0
+	usable := false
+	constraintsId := 0
+	// interpret rotation to get shape_index, split_1, and split_2
+	shapeIndex := shapeLength - 2 - rotation
+	split1 := word1[shapeIndex : shapeIndex+2]
+	split2 := word2[shapeIndex : shapeIndex+2]
+	// set complex information (prompt and solution)
+	var solution []string
+	var prompt []string
+	for i := 0; i < len(word1); i++ {
+		// for word1 == "sinew" and word2 == "screw"
+		// prompt would be: -icnr--
+		// solution would be: sew
+		if i == shapeIndex {
+			prompt = append(prompt, string(word1[i]))
+			prompt = append(prompt, string(word2[i]))
+		} else if i == shapeIndex+1 {
+			prompt = append(prompt, string(word1[i]))
+			prompt = append(prompt, string(word2[i]))
+		} else {
+			prompt = append(prompt, "-")
+			solution = append(solution, string(word1[i]))
+		}
+	}
+	// if the word wasn't entered before, then insert it into the db
+	db.Exec("INSERT INTO sdwps (word_1, word_2, split_1, split_2, shape_index, shape_length, prompt, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", word1, word2, split1, split2, shapeIndex, shapeLength, prompt, solution, usable, mistakesId, constraintsId)
 }
 
-/*func uploadToDB(word1 string, word2 string) (int64, error) {
-	result, err := db.Exec("INSERT INTO sdwps (t)")
-}*/
+func updateUsabilityDB(word1 string, word2 string) {
+	// if the word was entered before, then change its usable status to true and return
+	db.Exec("SET usable=TRUE FROM sdwps WHERE word_1='%s' and word_2='%s'", word1, word2)
+}
 
 func getWordsArrayFromFile(filename string) [][]string {
 	// Returns array of arrays of strings
