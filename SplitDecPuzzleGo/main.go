@@ -91,6 +91,7 @@ func setupDB(username string, password string) {
 		log.Fatal(pingErr)
 	}
 	fmt.Println("successful DB connection! Woohoo!")
+	db.Exec("DELETE FROM sdwps")
 }
 
 func findSDWPs(usableWordsFile string, referenceWordsFile string) {
@@ -173,32 +174,24 @@ func uploadRefToDB(word1 string, word2 string, rotation int) {
 	//Start by getting trivial information.
 	shapeLength := len(word1)
 	mistakesId := 0
-	usable := false
+	usable := 0
 	constraintsId := 0
 	// interpret rotation to get shape_index, split_1, and split_2
 	shapeIndex := shapeLength - 2 - rotation
 	split1 := word1[shapeIndex : shapeIndex+2]
 	split2 := word2[shapeIndex : shapeIndex+2]
-	// set complex information (prompt and solution)
-	var solution []string
-	var prompt []string
+	// set complex information (solution.
+	// I used to also include prompt, but that's unnecessary.)
+	var solution string
 	for i := 0; i < len(word1); i++ {
 		// for word1 == "sinew" and word2 == "screw"
-		// prompt would be: -icnr--
 		// solution would be: sew
-		if i == shapeIndex {
-			prompt = append(prompt, string(word1[i]))
-			prompt = append(prompt, string(word2[i]))
-		} else if i == shapeIndex+1 {
-			prompt = append(prompt, string(word1[i]))
-			prompt = append(prompt, string(word2[i]))
-		} else {
-			prompt = append(prompt, "-")
-			solution = append(solution, string(word1[i]))
+		if i != shapeIndex && i != shapeIndex+1 {
+			solution = solution + string(word1[i])
 		}
 	}
 	// if the word wasn't entered before, then insert it into the db
-	db.Exec("INSERT INTO sdwps (word_1, word_2, split_1, split_2, shape_index, shape_length, prompt, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", word1, word2, split1, split2, shapeIndex, shapeLength, prompt, solution, usable, mistakesId, constraintsId)
+	db.Exec("INSERT INTO sdwps (sdwp_id, word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 0, word1, word2, split1, split2, shapeIndex, shapeLength, solution, usable, mistakesId, constraintsId)
 }
 
 func updateUsabilityDB(word1 string, word2 string) {
