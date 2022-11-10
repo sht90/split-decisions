@@ -16,6 +16,7 @@ var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
 var db *sql.DB
 var debug bool = true
+var phase1Complete bool = true
 
 func main() {
 	/* This program is designed to do a complete Split Decisions Puzzle
@@ -30,19 +31,21 @@ func main() {
 	dbPassword := ""
 	dbUsername, dbPassword = parseSecretInfo("/Users/samtaylor/Documents/SQL_Secrets/sdwp_secrets.txt")
 	setupDB(dbUsername, dbPassword)
-	findSDWPs("/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/HandTrimmedUsableDictionary.txt", "/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/dictionary.txt")
-	// check phase 1
-	rows, err := db.Query("SELECT * FROM sdwps")
-	if err != nil {
-		print("error when checking phase 1!")
+	if !phase1Complete {
+		db.Exec("DELETE FROM sdwps")
+		findSDWPs("/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/HandTrimmedUsableDictionary.txt", "/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/dictionary.txt")
+		// verify findSDWPs
+		rows, err := db.Query("SELECT * FROM sdwps")
+		if err != nil {
+			print("error when checking phase 1!")
+		}
+		defer rows.Close()
+		count := 0
+		for rows.Next() {
+			count++
+		}
+		fmt.Printf("final table has %d rows\n", count)
 	}
-	defer rows.Close()
-	// Loop through rows, using Scan to assign column data to struct fields.
-	count := 0
-	for rows.Next() {
-		count++
-	}
-	fmt.Printf("final table has %d rows\n", count)
 }
 
 func parseSecretInfo(secretsFile string) (dbUsername string, dbPassword string) {
@@ -91,7 +94,6 @@ func setupDB(username string, password string) {
 		log.Fatal(pingErr)
 	}
 	fmt.Println("successful DB connection! Woohoo!")
-	db.Exec("DELETE FROM sdwps")
 }
 
 func findSDWPs(usableWordsFile string, referenceWordsFile string) {
@@ -191,7 +193,7 @@ func uploadRefToDB(word1 string, word2 string, rotation int) {
 		}
 	}
 	// if the word wasn't entered before, then insert it into the db
-	db.Exec("INSERT INTO sdwps (sdwp_id, word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 0, word1, word2, split1, split2, shapeIndex, shapeLength, solution, usable, mistakesId, constraintsId)
+	db.Exec("INSERT INTO sdwps (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", word1, word2, split1, split2, shapeIndex, shapeLength, solution, usable, mistakesId, constraintsId)
 }
 
 func updateUsabilityDB(word1 string, word2 string) {
