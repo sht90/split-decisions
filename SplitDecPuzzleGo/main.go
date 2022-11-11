@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -16,7 +17,7 @@ var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
 var db *sql.DB
 var debug bool = true
-var phase1Complete bool = true
+var phase1Complete bool = false
 
 func main() {
 	/* This program is designed to do a complete Split Decisions Puzzle
@@ -198,7 +199,7 @@ func uploadRefToDB(word1 string, word2 string, rotation int) {
 
 func updateUsabilityDB(word1 string, word2 string) {
 	// if the word was entered before, then change its usable status to true and return
-	db.Exec("SET usable=TRUE FROM sdwps WHERE word_1='%s' and word_2='%s'", word1, word2)
+	db.Exec("UPDATE sdwps SET usable = ? WHERE word_1 = ? AND word_2 = ?", 1, word1, word2)
 }
 
 func getWordsArrayFromFile(filename string) [][]string {
@@ -215,7 +216,7 @@ func getWordsArrayFromFile(filename string) [][]string {
 	var words []string
 	scanner := bufio.NewScanner(wordsInputList)
 	for scanner.Scan() {
-		words = append(words, scanner.Text())
+		words = append(words, strings.ToUpper(scanner.Text()))
 	}
 	// set up the array of arrays
 	var arrays [][]string
