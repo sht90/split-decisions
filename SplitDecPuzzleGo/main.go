@@ -2,22 +2,132 @@ package main
 
 import (
 	"bufio"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
-var db *sql.DB
 var debug bool = true
-var phase1Complete bool = false
+var sdwps []SDWP
+var letter2BitString = map[byte]int{
+	'a': 0b10000000000000000000000000,
+	'b': 0b01000000000000000000000000,
+	'c': 0b00100000000000000000000000,
+	'd': 0b00010000000000000000000000,
+	'e': 0b00001000000000000000000000,
+	'f': 0b00000100000000000000000000,
+	'g': 0b00000010000000000000000000,
+	'h': 0b00000001000000000000000000,
+	'i': 0b00000000100000000000000000,
+	'j': 0b00000000010000000000000000,
+	'k': 0b00000000001000000000000000,
+	'l': 0b00000000000100000000000000,
+	'm': 0b00000000000010000000000000,
+	'n': 0b00000000000001000000000000,
+	'o': 0b00000000000000100000000000,
+	'p': 0b00000000000000010000000000,
+	'q': 0b00000000000000001000000000,
+	'r': 0b00000000000000000100000000,
+	's': 0b00000000000000000010000000,
+	't': 0b00000000000000000001000000,
+	'u': 0b00000000000000000000100000,
+	'v': 0b00000000000000000000010000,
+	'w': 0b00000000000000000000001000,
+	'x': 0b00000000000000000000000100,
+	'y': 0b00000000000000000000000010,
+	'z': 0b00000000000000000000000001,
+}
+var bitString2Letter = map[int]string{
+	0b10000000000000000000000000: "a",
+	0b01000000000000000000000000: "b",
+	0b00100000000000000000000000: "c",
+	0b00010000000000000000000000: "d",
+	0b00001000000000000000000000: "e",
+	0b00000100000000000000000000: "f",
+	0b00000010000000000000000000: "g",
+	0b00000001000000000000000000: "h",
+	0b00000000100000000000000000: "i",
+	0b00000000010000000000000000: "j",
+	0b00000000001000000000000000: "k",
+	0b00000000000100000000000000: "l",
+	0b00000000000010000000000000: "m",
+	0b00000000000001000000000000: "n",
+	0b00000000000000100000000000: "o",
+	0b00000000000000010000000000: "p",
+	0b00000000000000001000000000: "q",
+	0b00000000000000000100000000: "r",
+	0b00000000000000000010000000: "s",
+	0b00000000000000000001000000: "t",
+	0b00000000000000000000100000: "u",
+	0b00000000000000000000010000: "v",
+	0b00000000000000000000001000: "w",
+	0b00000000000000000000000100: "x",
+	0b00000000000000000000000010: "y",
+	0b00000000000000000000000001: "z",
+}
+
+type Shape struct {
+	length, index int
+}
+
+type FastPrompt struct {
+	shapeId int
+	splitX1 int
+	splitX2 int
+}
+
+type SDWP struct {
+	// Each split decisions word pair (SDWP) is defined by the following strings:
+	// the two words that comprise the split decisions (ex. sinew, screw),
+	// the two strings used in the split portion of the SDWP (ex. in, cr),
+	// the two strings used in the joint portions of the SDWP (ex. s, ew).
+	word1, word2, split1, split2, joint1, joint2 string
+	// The SDWP also has metadata to make common operations quicker:
+	// the shape says what space an SDWP would occupy on the board (ex. -|--)
+	shape Shape
+	// the prompt is all the info the user sees from a blank puzzle (ex. -(i/c|n/r)--)
+	prompt FastPrompt
+	// if the sdwp is usable in a board
+	usable bool
+}
+
+// populate all the struct fields of an sdwp just from word1, word2, rotation
+func SdwpConstructor(word1 string, word2 string, rot int) SDWP {
+	// get shape
+	_shape := Shape{
+		length: len(word1),
+		index:  len(word1) - 2 - rot,
+	}
+	// get shapeId for fast prompt
+	n := _shape.length - MIN_WORD_LENGTH + 1
+	sumn := n * (n + 1) / 2
+	_shapeId := sumn - 1 + _shape.index
+	// get splitX1 and splitX2 for fast prompt
+	_splitX1 := letter2BitString[word1[_shape.index]] | letter2BitString[word2[_shape.index]]
+	_splitX2 := letter2BitString[word1[_shape.index+1]] | letter2BitString[word2[_shape.index+1]]
+	_prompt := FastPrompt{
+		shapeId: _shapeId,
+		splitX1: _splitX1,
+		splitX2: _splitX2,
+	}
+	// actually make the struct now
+	return SDWP{
+		word1:  word1,
+		word2:  word2,
+		split1: word1[_shape.index : _shape.index+2],
+		split2: word2[_shape.index : _shape.index+2],
+		joint1: word1[:_shape.index],
+		joint2: word1[_shape.index+2:],
+		shape:  _shape,
+		prompt: _prompt,
+		usable: false,
+	}
+}
 
 func main() {
 	/* This program is designed to do a complete Split Decisions Puzzle
@@ -26,75 +136,21 @@ func main() {
 	 *   2. Find constraints for SDWPs
 	 *   3. Generate a board (or boards) using constrained SDWPs
 	 */
-	// Phase 1: Find SDWPs and store them in a SQL DB
-	// set up sql DB
-	dbUsername := ""
-	dbPassword := ""
-	dbUsername, dbPassword = parseSecretInfo("/Users/samtaylor/Documents/SQL_Secrets/sdwp_secrets.txt")
-	setupDB(dbUsername, dbPassword)
-	if !phase1Complete {
-		db.Exec("DELETE FROM sdwps")
-		findSDWPs("/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/HandTrimmedUsableDictionary.txt", "/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/dictionary.txt")
-		// verify findSDWPs
-		rows, err := db.Query("SELECT * FROM sdwps")
-		if err != nil {
-			print("error when checking phase 1!")
-		}
-		defer rows.Close()
-		count := 0
-		for rows.Next() {
-			count++
-		}
-		fmt.Printf("final table has %d rows\n", count)
-	}
+	// Phase 1: Find SDWPs and store them in an array
+	findSDWPs("/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/HandTrimmedUsableDictionary.txt", "/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/dictionary.txt")
 }
 
-func parseSecretInfo(secretsFile string) (dbUsername string, dbPassword string) {
-	// parse secret info (SQL username and DB) from a txt file
-	secretsList, err := os.Open(secretsFile)
-	// catch error
-	if err != nil {
-		log.Fatal(err)
+func compareShapes(shape1 Shape, shape2 Shape) int {
+	if shape1.length > shape2.length {
+		return 1
+	} else if shape2.length > shape1.length {
+		return -1
+	} else if shape1.index > shape2.index {
+		return 1
+	} else if shape2.index > shape1.index {
+		return -1
 	}
-	// remember to close the file at the end of the program
-	defer secretsList.Close()
-	// read the file into an array of words, using the scanner
-	var secrets []string
-	scanner := bufio.NewScanner(secretsList)
-	for scanner.Scan() {
-		secrets = append(secrets, scanner.Text())
-	}
-	// catch errors with scanner
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	// parse secrets
-	dbUsername = secrets[0]
-	dbPassword = secrets[1]
-	return dbUsername, dbPassword
-}
-
-func setupDB(username string, password string) {
-	// DB is global so no need for params/returns
-	cfg := mysql.Config{
-		AllowNativePasswords: true,
-		User:                 username,
-		Passwd:               password,
-		Net:                  "tcp",
-		Addr:                 "127.0.0.1:3306",
-		DBName:               "splitDecGen",
-	}
-	// get database handle
-	var err error
-	db, err = sql.Open("mysql", cfg.FormatDSN())
-	if err != nil {
-		log.Fatal(err)
-	}
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
-	}
-	fmt.Println("successful DB connection! Woohoo!")
+	return 0
 }
 
 func findSDWPs(usableWordsFile string, referenceWordsFile string) {
@@ -149,9 +205,11 @@ func popDBFromWordsArray(words [][]string, usable bool) {
 						tmpWord1 := w[i][rot:] + w[i][:rot]
 						tmpWord2 := w[j][rot:] + w[j][:rot]
 						if usable {
-							updateUsabilityDB(tmpWord1, tmpWord2)
+
 						} else {
-							uploadRefToDB(tmpWord1, tmpWord2, rot)
+							// put the sdwp in the array. It's guaranteed to be in sorted order
+							sdwps = append(sdwps, SdwpConstructor(tmpWord1, tmpWord2, rot))
+							// update metadata arrays
 						}
 					}
 					// if words have too many letters in common, this isn't
@@ -171,35 +229,6 @@ func popDBFromWordsArray(words [][]string, usable bool) {
 			fmt.Printf("Took %s\n", elapsed)
 		}
 	}
-}
-
-func uploadRefToDB(word1 string, word2 string, rotation int) {
-	//Start by getting trivial information.
-	shapeLength := len(word1)
-	mistakesId := 0
-	usable := 0
-	constraintsId := 0
-	// interpret rotation to get shape_index, split_1, and split_2
-	shapeIndex := shapeLength - 2 - rotation
-	split1 := word1[shapeIndex : shapeIndex+2]
-	split2 := word2[shapeIndex : shapeIndex+2]
-	// set complex information (solution.
-	// I used to also include prompt, but that's unnecessary.)
-	var solution string
-	for i := 0; i < len(word1); i++ {
-		// for word1 == "sinew" and word2 == "screw"
-		// solution would be: sew
-		if i != shapeIndex && i != shapeIndex+1 {
-			solution = solution + string(word1[i])
-		}
-	}
-	// if the word wasn't entered before, then insert it into the db
-	db.Exec("INSERT INTO sdwps (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", word1, word2, split1, split2, shapeIndex, shapeLength, solution, usable, mistakesId, constraintsId)
-}
-
-func updateUsabilityDB(word1 string, word2 string) {
-	// if the word was entered before, then change its usable status to true and return
-	db.Exec("UPDATE sdwps SET usable = ? WHERE word_1 = ? AND word_2 = ?", 1, word1, word2)
 }
 
 func getWordsArrayFromFile(filename string) [][]string {
