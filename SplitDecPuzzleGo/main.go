@@ -108,7 +108,7 @@ func findSDWPs(usableWordsFile string, referenceWordsFile string) {
 		fmt.Println("Getting SDWPS from reference words")
 		start = time.Now()
 	}
-	popDBFromWordsArray(referenceWords, false)
+	popCSVFromWordsArray(referenceWords, "referenceSDWPS.csv")
 	if debug {
 		elapsed := time.Since(start)
 		fmt.Printf("  In total, took %s\n", elapsed)
@@ -117,16 +117,17 @@ func findSDWPs(usableWordsFile string, referenceWordsFile string) {
 		fmt.Println("Getting SDWPs from usable words")
 		start = time.Now()
 	}
-	popDBFromWordsArray(usableWords, true)
+	popCSVFromWordsArray(usableWords, "usableSDWPS.csv")
 	if debug {
 		elapsed := time.Since(start)
 		fmt.Printf("  In total, took %s\n", elapsed)
 	}
 }
 
-func popDBFromWordsArray(words [][]string, usable bool) {
+func popCSVFromWordsArray(words [][]string, outputCSV string) {
 	// Traverse all words. First by length, then alphabetically
 	var start time.Time
+	var outCSVLines []string
 	for l := MIN_WORD_LENGTH; l <= MAX_WORD_LENGTH; l++ {
 		if debug {
 			fmt.Printf("  Parsing %d-letter words... ", l)
@@ -148,11 +149,7 @@ func popDBFromWordsArray(words [][]string, usable bool) {
 						// un-rotate words and add them to DB
 						tmpWord1 := w[i][rot:] + w[i][:rot]
 						tmpWord2 := w[j][rot:] + w[j][:rot]
-						if usable {
-							updateUsabilityDB(tmpWord1, tmpWord2)
-						} else {
-							uploadRefToDB(tmpWord1, tmpWord2, rot)
-						}
+						outCSVLines = append(outCSVLines, stringSdwp(tmpWord1, tmpWord2, rot))
 					}
 					// if words have too many letters in common, this isn't
 					// a match, but w[i] might still have more matches later.
@@ -169,6 +166,53 @@ func popDBFromWordsArray(words [][]string, usable bool) {
 		if debug {
 			elapsed := time.Since(start)
 			fmt.Printf("Took %s\n", elapsed)
+		}
+	}
+	stringArrToCSV(outCSVLines, outputCSV)
+}
+
+func stringSdwp(word1 string, word2 string, rotation int) string {
+	// build string
+	retString := ""
+	// and now just start appending values...
+	retString += word1 + "," + word2 + ","
+	// Get trivial information.
+	shapeLength := len(word1)
+	mistakesId := 0
+	usable := 0
+	constraintsId := 0
+	retString += fmt.Sprint(mistakesId) + "," + fmt.Sprint(usable) + "," + fmt.Sprint(constraintsId) + ","
+	// interpret rotation to get shape_index, split_1, and split_2
+	shapeIndex := shapeLength - 2 - rotation
+	retString += fmt.Sprint(shapeLength) + "," + fmt.Sprint(shapeIndex) + ","
+	split1 := word1[shapeIndex : shapeIndex+2]
+	split2 := word2[shapeIndex : shapeIndex+2]
+	retString += split1 + "," + split2 + ","
+	// set complex information (solution.
+	// I used to also include prompt, but that's unnecessary.)
+	var solution string
+	for i := 0; i < len(word1); i++ {
+		// for word1 == "sinew" and word2 == "screw"
+		// solution would be: sew
+		if i != shapeIndex && i != shapeIndex+1 {
+			solution = solution + string(word1[i])
+		}
+	}
+	retString += solution
+	return retString
+}
+
+func stringArrToCSV(arr []string, outFile string) {
+	f, err := os.OpenFile(outFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer f.Close()
+	for i := 0; i < len(arr); i++ {
+		_, err = fmt.Fprintln(f, arr[i])
+		if err != nil {
+			fmt.Println(err)
 		}
 	}
 }
