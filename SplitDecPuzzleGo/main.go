@@ -35,6 +35,32 @@ func main() {
 	if !phase1Complete {
 		db.Exec("DELETE FROM sdwps")
 		findSDWPs("/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/HandTrimmedUsableDictionary.txt", "/Users/samtaylor/Documents/SplitDecPuzzlePy/TextFiles/dictionary.txt")
+		var start time.Time
+		if debug {
+			fmt.Println("Performing bulk update from CSV files...")
+			start = time.Now()
+		}
+		bulkAddCSVsToDB()
+		if debug {
+			elapsed := time.Since(start)
+			fmt.Printf("  In total, took %s\n", elapsed)
+		}
+		if debug {
+			fmt.Println("Updating usability...")
+			start = time.Now()
+		}
+		_, err := db.Exec("UPDATE usable_sdwps SET usable = 1")
+		if err != nil {
+			fmt.Println(err)
+		}
+		_, err = db.Exec("UPDATE sdwps INNER JOIN usable_sdwps ON usable_sdwps.word_1 = sdwps.word_1 AND usable_sdwps.word_2 = sdwps.word_2 SET sdwps.usable = 1")
+		if debug {
+			elapsed := time.Since(start)
+			fmt.Printf("  In total, took %s\n", elapsed)
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
 		// verify findSDWPs
 		rows, err := db.Query("SELECT * FROM sdwps")
 		if err != nil {
@@ -181,13 +207,12 @@ func stringSdwp(word1 string, word2 string, rotation int) string {
 	mistakesId := 0
 	usable := 0
 	constraintsId := 0
-	retString += fmt.Sprint(mistakesId) + "," + fmt.Sprint(usable) + "," + fmt.Sprint(constraintsId) + ","
 	// interpret rotation to get shape_index, split_1, and split_2
 	shapeIndex := shapeLength - 2 - rotation
-	retString += fmt.Sprint(shapeLength) + "," + fmt.Sprint(shapeIndex) + ","
 	split1 := word1[shapeIndex : shapeIndex+2]
 	split2 := word2[shapeIndex : shapeIndex+2]
 	retString += split1 + "," + split2 + ","
+	retString += fmt.Sprint(shapeIndex) + "," + fmt.Sprint(shapeLength) + ","
 	// set complex information (solution.
 	// I used to also include prompt, but that's unnecessary.)
 	var solution string
@@ -199,11 +224,12 @@ func stringSdwp(word1 string, word2 string, rotation int) string {
 		}
 	}
 	retString += solution
+	retString += fmt.Sprint(usable) + "," + fmt.Sprint(mistakesId) + "," + fmt.Sprint(constraintsId)
 	return retString
 }
 
 func stringArrToCSV(arr []string, outFile string) {
-	f, err := os.OpenFile(outFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(outFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -214,6 +240,21 @@ func stringArrToCSV(arr []string, outFile string) {
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+}
+
+func bulkAddCSVsToDB() {
+	mysql.RegisterLocalFile("usableSDWPS.csv")
+	_, err := db.Exec("LOAD DATA LOCAL INFILE 'usableSDWPS.csv' INTO TABLE usable_sdwps FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id)")
+	if err != nil {
+		fmt.Println("db.ExecContext", err)
+		return
+	}
+	mysql.RegisterLocalFile("referenceSDWPS.csv")
+	_, err = db.Exec("LOAD DATA LOCAL INFILE 'referenceSDWPS.csv' INTO TABLE sdwps FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id)")
+	if err != nil {
+		fmt.Println("db.ExecContext", err)
+		return
 	}
 }
 
