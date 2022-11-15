@@ -45,22 +45,6 @@ func main() {
 			elapsed := time.Since(start)
 			fmt.Printf("  In total, took %s\n", elapsed)
 		}
-		if debug {
-			fmt.Println("Updating usability...")
-			start = time.Now()
-		}
-		_, err := db.Exec("UPDATE usable_sdwps SET usable = 1")
-		if err != nil {
-			fmt.Println(err)
-		}
-		_, err = db.Exec("UPDATE sdwps INNER JOIN usable_sdwps ON usable_sdwps.word_1 = sdwps.word_1 AND usable_sdwps.word_2 = sdwps.word_2 SET sdwps.usable = 1")
-		if debug {
-			elapsed := time.Since(start)
-			fmt.Printf("  In total, took %s\n", elapsed)
-		}
-		if err != nil {
-			fmt.Println(err)
-		}
 		// verify findSDWPs
 		rows, err := db.Query("SELECT * FROM sdwps")
 		if err != nil {
@@ -72,6 +56,17 @@ func main() {
 			count++
 		}
 		fmt.Printf("final table has %d rows\n", count)
+		// verify usable SDWPs too
+		rows, err = db.Query("SELECT * FROM sdwps WHERE usable = 1")
+		if err != nil {
+			print("error when checking phase 1!")
+		}
+		defer rows.Close()
+		count = 0
+		for rows.Next() {
+			count++
+		}
+		fmt.Printf("final table has %d usable sdwps\n", count)
 	}
 }
 
@@ -108,7 +103,7 @@ func setupDB(username string, password string) {
 		Passwd:               password,
 		Net:                  "tcp",
 		Addr:                 "127.0.0.1:3306",
-		DBName:               "splitDecGen",
+		DBName:               "splitDecGen2",
 	}
 	// get database handle
 	var err error
@@ -131,26 +126,17 @@ func findSDWPs(usableWordsFile string, referenceWordsFile string) {
 	usableWords := getWordsArrayFromFile(usableWordsFile)
 	referenceWords := getWordsArrayFromFile(referenceWordsFile)
 	if debug {
-		fmt.Println("Getting SDWPS from reference words")
+		fmt.Println("Getting SDWPS...")
 		start = time.Now()
 	}
-	popCSVFromWordsArray(referenceWords, "referenceSDWPS.csv")
-	if debug {
-		elapsed := time.Since(start)
-		fmt.Printf("  In total, took %s\n", elapsed)
-	}
-	if debug {
-		fmt.Println("Getting SDWPs from usable words")
-		start = time.Now()
-	}
-	popCSVFromWordsArray(usableWords, "usableSDWPS.csv")
+	popCSVFromWordsArray(usableWords, referenceWords, "referenceSDWPS.csv")
 	if debug {
 		elapsed := time.Since(start)
 		fmt.Printf("  In total, took %s\n", elapsed)
 	}
 }
 
-func popCSVFromWordsArray(words [][]string, outputCSV string) {
+func popCSVFromWordsArray(usableWords [][]string, words [][]string, outputCSV string) {
 	// Traverse all words. First by length, then alphabetically
 	var start time.Time
 	var outCSVLines []string
@@ -160,6 +146,7 @@ func popCSVFromWordsArray(words [][]string, outputCSV string) {
 			start = time.Now()
 		}
 		w := words[l-MIN_WORD_LENGTH]
+		uw := usableWords[l-MIN_WORD_LENGTH]
 		for rot := 0; rot < l-1; rot++ {
 			for i := 0; i < len(w)-1; i++ {
 				for j := i + 1; j < len(w); j++ {
@@ -175,7 +162,8 @@ func popCSVFromWordsArray(words [][]string, outputCSV string) {
 						// un-rotate words and add them to DB
 						tmpWord1 := w[i][rot:] + w[i][:rot]
 						tmpWord2 := w[j][rot:] + w[j][:rot]
-						outCSVLines = append(outCSVLines, stringSdwp(tmpWord1, tmpWord2, rot))
+						tmpUsable := (sort.SearchStrings(uw, tmpWord1) >= 0) && (sort.SearchStrings(uw, tmpWord2) >= 0)
+						outCSVLines = append(outCSVLines, stringSdwp(tmpWord1, tmpWord2, rot, tmpUsable))
 					}
 					// if words have too many letters in common, this isn't
 					// a match, but w[i] might still have more matches later.
@@ -197,7 +185,7 @@ func popCSVFromWordsArray(words [][]string, outputCSV string) {
 	stringArrToCSV(outCSVLines, outputCSV)
 }
 
-func stringSdwp(word1 string, word2 string, rotation int) string {
+func stringSdwp(word1 string, word2 string, rotation int, usableBool bool) string {
 	// build string
 	retString := ""
 	// and now just start appending values...
@@ -206,6 +194,9 @@ func stringSdwp(word1 string, word2 string, rotation int) string {
 	shapeLength := len(word1)
 	mistakesId := 0
 	usable := 0
+	if usableBool {
+		usable = 1
+	}
 	constraintsId := 0
 	// interpret rotation to get shape_index, split_1, and split_2
 	shapeIndex := shapeLength - 2 - rotation
@@ -223,7 +214,7 @@ func stringSdwp(word1 string, word2 string, rotation int) string {
 			solution = solution + string(word1[i])
 		}
 	}
-	retString += solution
+	retString += solution + ","
 	retString += fmt.Sprint(usable) + "," + fmt.Sprint(mistakesId) + "," + fmt.Sprint(constraintsId)
 	return retString
 }
@@ -244,47 +235,12 @@ func stringArrToCSV(arr []string, outFile string) {
 }
 
 func bulkAddCSVsToDB() {
-	mysql.RegisterLocalFile("usableSDWPS.csv")
-	_, err := db.Exec("LOAD DATA LOCAL INFILE 'usableSDWPS.csv' INTO TABLE usable_sdwps FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id)")
-	if err != nil {
-		fmt.Println("db.ExecContext", err)
-		return
-	}
 	mysql.RegisterLocalFile("referenceSDWPS.csv")
-	_, err = db.Exec("LOAD DATA LOCAL INFILE 'referenceSDWPS.csv' INTO TABLE sdwps FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id)")
+	_, err := db.Exec("LOAD DATA LOCAL INFILE 'referenceSDWPS.csv' INTO TABLE sdwps FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id)")
 	if err != nil {
 		fmt.Println("db.ExecContext", err)
 		return
 	}
-}
-
-func uploadRefToDB(word1 string, word2 string, rotation int) {
-	//Start by getting trivial information.
-	shapeLength := len(word1)
-	mistakesId := 0
-	usable := 0
-	constraintsId := 0
-	// interpret rotation to get shape_index, split_1, and split_2
-	shapeIndex := shapeLength - 2 - rotation
-	split1 := word1[shapeIndex : shapeIndex+2]
-	split2 := word2[shapeIndex : shapeIndex+2]
-	// set complex information (solution.
-	// I used to also include prompt, but that's unnecessary.)
-	var solution string
-	for i := 0; i < len(word1); i++ {
-		// for word1 == "sinew" and word2 == "screw"
-		// solution would be: sew
-		if i != shapeIndex && i != shapeIndex+1 {
-			solution = solution + string(word1[i])
-		}
-	}
-	// if the word wasn't entered before, then insert it into the db
-	db.Exec("INSERT INTO sdwps (word_1, word_2, split_1, split_2, shape_index, shape_length, solution, usable, mistakes_id, constraints_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", word1, word2, split1, split2, shapeIndex, shapeLength, solution, usable, mistakesId, constraintsId)
-}
-
-func updateUsabilityDB(word1 string, word2 string) {
-	// if the word was entered before, then change its usable status to true and return
-	db.Exec("UPDATE sdwps SET usable = ? WHERE word_1 = ? AND word_2 = ?", 1, word1, word2)
 }
 
 func getWordsArrayFromFile(filename string) [][]string {
