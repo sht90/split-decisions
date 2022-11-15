@@ -159,12 +159,13 @@ func popCSVFromWordsArray(usableWords [][]string, words [][]string, outputCSV st
 					// is a match! Add to DB. w[i] might still have more
 					// matches later though. Keep traversing.
 					if w[i][l-1] != w[j][l-1] && w[i][l-2] != w[j][l-2] {
-						// un-rotate words and add them to DB
+						// un-rotate words and see if they appear in the usable dictionary
 						tmpWord1 := w[i][rot:] + w[i][:rot]
 						tmpWord2 := w[j][rot:] + w[j][:rot]
 						tmpWord1Index := sort.SearchStrings(uw, tmpWord1)
 						tmpWord2Index := sort.SearchStrings(uw, tmpWord2)
 						tmpUsable := tmpWord1Index >= 0 && tmpWord1Index < len(uw) && tmpWord2Index >= 0 && tmpWord2Index < len(uw) && uw[tmpWord1Index] == tmpWord1 && uw[tmpWord2Index] == tmpWord2
+						// add new sdwp to CSV lines array
 						outCSVLines = append(outCSVLines, stringSdwp(tmpWord1, tmpWord2, rot, tmpUsable))
 					}
 					// if words have too many letters in common, this isn't
@@ -184,6 +185,7 @@ func popCSVFromWordsArray(usableWords [][]string, words [][]string, outputCSV st
 			fmt.Printf("Took %s\n", elapsed)
 		}
 	}
+	// convert array of csv lines to an actual csv file, which can be bulk-inserted into DB
 	stringArrToCSV(outCSVLines, outputCSV)
 }
 
