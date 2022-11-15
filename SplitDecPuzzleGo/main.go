@@ -162,7 +162,9 @@ func popCSVFromWordsArray(usableWords [][]string, words [][]string, outputCSV st
 						// un-rotate words and add them to DB
 						tmpWord1 := w[i][rot:] + w[i][:rot]
 						tmpWord2 := w[j][rot:] + w[j][:rot]
-						tmpUsable := (sort.SearchStrings(uw, tmpWord1) >= 0) && (sort.SearchStrings(uw, tmpWord2) >= 0)
+						tmpWord1Index := sort.SearchStrings(uw, tmpWord1)
+						tmpWord2Index := sort.SearchStrings(uw, tmpWord2)
+						tmpUsable := tmpWord1Index >= 0 && tmpWord1Index < len(uw) && tmpWord2Index >= 0 && tmpWord2Index < len(uw) && uw[tmpWord1Index] == tmpWord1 && uw[tmpWord2Index] == tmpWord2
 						outCSVLines = append(outCSVLines, stringSdwp(tmpWord1, tmpWord2, rot, tmpUsable))
 					}
 					// if words have too many letters in common, this isn't
