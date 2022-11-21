@@ -13,11 +13,69 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+var letter2BitString = map[byte]int{
+	'a': 0b10000000000000000000000000,
+	'b': 0b01000000000000000000000000,
+	'c': 0b00100000000000000000000000,
+	'd': 0b00010000000000000000000000,
+	'e': 0b00001000000000000000000000,
+	'f': 0b00000100000000000000000000,
+	'g': 0b00000010000000000000000000,
+	'h': 0b00000001000000000000000000,
+	'i': 0b00000000100000000000000000,
+	'j': 0b00000000010000000000000000,
+	'k': 0b00000000001000000000000000,
+	'l': 0b00000000000100000000000000,
+	'm': 0b00000000000010000000000000,
+	'n': 0b00000000000001000000000000,
+	'o': 0b00000000000000100000000000,
+	'p': 0b00000000000000010000000000,
+	'q': 0b00000000000000001000000000,
+	'r': 0b00000000000000000100000000,
+	's': 0b00000000000000000010000000,
+	't': 0b00000000000000000001000000,
+	'u': 0b00000000000000000000100000,
+	'v': 0b00000000000000000000010000,
+	'w': 0b00000000000000000000001000,
+	'x': 0b00000000000000000000000100,
+	'y': 0b00000000000000000000000010,
+	'z': 0b00000000000000000000000001,
+}
+var bitString2Letter = map[int]string{
+	0b10000000000000000000000000: "a",
+	0b01000000000000000000000000: "b",
+	0b00100000000000000000000000: "c",
+	0b00010000000000000000000000: "d",
+	0b00001000000000000000000000: "e",
+	0b00000100000000000000000000: "f",
+	0b00000010000000000000000000: "g",
+	0b00000001000000000000000000: "h",
+	0b00000000100000000000000000: "i",
+	0b00000000010000000000000000: "j",
+	0b00000000001000000000000000: "k",
+	0b00000000000100000000000000: "l",
+	0b00000000000010000000000000: "m",
+	0b00000000000001000000000000: "n",
+	0b00000000000000100000000000: "o",
+	0b00000000000000010000000000: "p",
+	0b00000000000000001000000000: "q",
+	0b00000000000000000100000000: "r",
+	0b00000000000000000010000000: "s",
+	0b00000000000000000001000000: "t",
+	0b00000000000000000000100000: "u",
+	0b00000000000000000000010000: "v",
+	0b00000000000000000000001000: "w",
+	0b00000000000000000000000100: "x",
+	0b00000000000000000000000010: "y",
+	0b00000000000000000000000001: "z",
+}
+
 var MIN_WORD_LENGTH int = 3
 var MAX_WORD_LENGTH int = 12
 var db *sql.DB
 var debug bool = true
-var phase1Complete bool = false
+var phase1Complete bool = true
+var phase2Complete bool = false
 
 func main() {
 	/* This program is designed to do a complete Split Decisions Puzzle
@@ -68,6 +126,184 @@ func main() {
 		}
 		fmt.Printf("final table has %d usable sdwps\n", count)
 	}
+	// Phase 2: find metadata and add to the DB
+	if !phase2Complete {
+		getConstraints("mistakeables.csv", "constraints.csv")
+	}
+}
+
+func getConstraints(mistakeablesFile string, constraintsFile string) {
+	// first, get an array of sdwps sorted by prompt
+	solns, ids := getSdwpSolutionsByPrompt()
+	fmt.Printf("len(solns) = %d\nlen(solns[0]) = %d)", len(solns), len(solns[0]))
+	os.Exit(0)
+	// also, set up our output arrays
+	var mistakeablesCSV []string
+	var constraintsCSV []string
+	// traverse prompts
+	for p, prompt := range solns {
+		if p%1000 == 0 {
+			fmt.Printf("analyzing prompt %d", p)
+		}
+		// traverse solutions of sdwps with the same prompt
+		for s, currentSoln := range prompt {
+			currentId := ids[p][s]
+			// get initial array of mistakeables and constraints
+			var mistakeables []int
+			var constraints [][]int
+			for i := 0; i < len(currentSoln); i++ {
+				mistakeables = append(mistakeables, 0)
+			}
+			// traverse other solutions with the same prompt
+			for o, otherSoln := range prompt {
+				if o != s {
+					// for each letter that could be mistaken for another letter,
+					// mark that in the mistakeables array.
+					for i := range mistakeables {
+						if currentSoln[i] != otherSoln[i] {
+							mistakeables[i] |= letter2BitString[otherSoln[i]]
+						}
+					}
+				}
+			}
+			// congrats! You've found all the mistakeables. Add them to the CSV string array
+			outputString := fmt.Sprintf("%d,", currentId)
+			for i := 0; i < MAX_WORD_LENGTH; i++ {
+				if i < len(mistakeables) {
+					outputString += fmt.Sprintf("%d", mistakeables[i])
+				}
+				if i < MAX_WORD_LENGTH-1 {
+					outputString += ","
+				}
+			}
+			mistakeablesCSV = append(mistakeablesCSV, outputString)
+			// now, to find constraints.
+			if len(prompt) == 1 {
+				cc := make([]int, len(mistakeables))
+				constraints = append(constraints, cc)
+			} else {
+				var letterIndeces []int
+				for index := range currentSoln {
+					letterIndeces = append(letterIndeces, index)
+				}
+				for size := range letterIndeces {
+					combos := combinations(size, letterIndeces)
+					for _, combo := range combos {
+						constrainsAll := true
+						for o, otherSoln := range prompt {
+							if o != s {
+								for _, l := range combo {
+									if currentSoln[l] != otherSoln[l] {
+										constrainsAll = false
+										break
+									}
+								}
+								if constrainsAll {
+									// 0 by default
+									cc := make([]int, len(mistakeables))
+									for _, l := range combo {
+										cc[l] = 1
+									}
+									constraints = append(constraints, cc)
+									// you've found constraints! Now add them to the CSV
+									conOutString := fmt.Sprintf("%d,", currentId)
+									for i := 0; i < MAX_WORD_LENGTH; i++ {
+										if i < len(cc) {
+											conOutString += fmt.Sprintf("%d", cc[i])
+										}
+										if i < MAX_WORD_LENGTH-1 {
+											conOutString += ","
+										}
+									}
+									constraintsCSV = append(constraintsCSV, conOutString)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	print("finished getting metadata")
+	stringArrToCSV(mistakeablesCSV, mistakeablesFile)
+	stringArrToCSV(constraintsCSV, constraintsFile)
+}
+
+func combinations(size int, inputArray []int) [][]int {
+	return combinationsHelper(size, []int{}, inputArray, [][]int{})
+}
+
+func combinationsHelper(size int, solved []int, unsolved []int, output [][]int) [][]int {
+	// base case: if solved is of the right size, add it to the output
+	if len(solved) == size {
+		// or rather, add a copy, not the solved thing itself
+		solvedCopy := make([]int, len(solved))
+		copy(solvedCopy, solved)
+		output = append(output, solvedCopy)
+		return output
+	}
+	// recursive call: traverse the list to find new value to add to solved portion
+	for i, r := range unsolved {
+		solved = append(solved, r)
+		unsolvedCopy := make([]int, len(unsolved))
+		copy(unsolvedCopy, unsolved)
+		output = combinationsHelper(size, solved, unsolvedCopy[i+1:], output)
+		solved = solved[:len(solved)-1]
+	}
+	return output
+}
+
+func getSdwpSolutionsByPrompt() ([][]string, [][]int) {
+	// start with some setup:
+	var (
+		sdwpSolutions [][]string
+		sdwpIds       [][]int
+		prevLeng      int    = -1
+		prevIndx      int    = -1
+		prevSpl1      string = ""
+		prevSpl2      string = ""
+	)
+	// now do the actual database query. Here we want to find the solution for each sdwp,
+	// sorted by prompt. Prompt is comprised of shape and splits.
+	// We also need to query for the prompt itself, since we'll compare successive prompts
+	// so that everything with the same prompt is grouped together.
+	rows, err := db.Query("SELECT sdwp_id, solution, shape_length, shape_index, split_1, split_2 FROM sdwps ORDER BY shape_length, shape_index, split_1, split_2")
+	if err != nil {
+		fmt.Printf("Error %v", err)
+	}
+	// alright, we made it this far. So we have all the data we need
+	defer rows.Close()
+	// traverse all the rows, one by one
+	for rows.Next() {
+		// each row has these contents:
+		var (
+			id   int
+			soln string
+			leng int
+			indx int
+			spl1 string
+			spl2 string
+		)
+		if err := rows.Scan(&id, &soln, &leng, &indx, &spl1, &spl2); err != nil {
+			log.Fatal(err)
+		}
+		// if any of these contents aren't the same as their previous contents,
+		if (leng != prevLeng) || (indx != prevIndx) || (spl1 != prevSpl1) || (spl2 != prevSpl2) {
+			// overwrite the previous contents and append a new nested array
+			prevLeng = leng
+			prevIndx = indx
+			prevSpl1 = spl1
+			prevSpl2 = spl2
+			sdwpSolutions = append(sdwpSolutions, []string{soln})
+			sdwpIds = append(sdwpIds, []int{id})
+		} else {
+			// if the prompt is the same, add the solution to the previously established nested array
+			sdwpSolutions[len(sdwpSolutions)-1] = append(sdwpSolutions[len(sdwpSolutions)-1], soln)
+			sdwpIds[len(sdwpIds)-1] = append(sdwpIds[len(sdwpIds)-1], id)
+		}
+	}
+	fmt.Println("Finished getting sdwpSolutions and sdwpIds")
+	return sdwpSolutions, sdwpIds
 }
 
 func parseSecretInfo(secretsFile string) (dbUsername string, dbPassword string) {
