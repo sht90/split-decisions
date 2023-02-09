@@ -8,15 +8,15 @@ namespace SplitDecisions
 {
     internal class WordPair : IComparable, IComparable<WordPair>
     {
-        Shape Shape;
-        string[] Words;
-        string[] Splits;
-        string Letters;
-        string Before;
-        string After;
-        int Usability;
-        List<int> Mistakeables;
-        List<int> Anchors;
+        public Shape Shape;
+        public string[] Words;
+        public string[] Splits;
+        public string Letters;
+        public string Before;
+        public string After;
+        public int Usability;
+        public List<int> Mistakeables;
+        public List<int> Anchors;
 
         public WordPair(Shape shape, string word1, string word2, int usability)
         {
@@ -37,6 +37,13 @@ namespace SplitDecisions
         public override string ToString()
         {
             return String.Format("{0}({1}/{2}){3}", Before, Splits[0], Splits[1], After);
+        }
+
+        public string GetPrompt()
+        {
+            string tmpBefore = String.Concat("-", Before.Length);
+            string tmpAfter = String.Concat("-", After.Length);
+            return String.Format("{0}({1}/{2}){3}", tmpBefore, Splits[0], Splits[1], tmpAfter);
         }
 
         public int CompareTo(object? other)

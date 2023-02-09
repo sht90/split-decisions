@@ -11,14 +11,21 @@ namespace SplitDecisions
 
         public static int Convert(char letter)
         {
-            return 1 << (letter % 32);
+            return 1 << ((int)letter - (int)'a');
         }
-        public static char Convert(int code)
+        public static List<char> Convert(int code)
         {
-            for (char c = 'a'; c <= 'z', c++)
+            int bitmask;
+            List<char> chars = new() { };
+            for (int i = 0; i < 26; i++)
             {
-
+                bitmask = 1 << i;
+                if ((code | bitmask) == bitmask)
+                {
+                    chars.Add((char)((int)'a' + i));
+                }
             }
+            return chars;
         }
     }
 }

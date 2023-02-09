@@ -89,7 +89,7 @@ namespace SplitDecisions
                     Word baseWord = rotatedWords[i];
                     l = baseWord.Letters.Length;
                     // Traverse each subsequent word with the given rotation
-                    for (int j = 0; j < rotatedWords.Count; j++)
+                    for (int j = i + 1; j < rotatedWords.Count; j++)
                     {
                         Word nextWord = rotatedWords[j];
                         // If the next word is the wrong length, no subsequent word will be the right length either.

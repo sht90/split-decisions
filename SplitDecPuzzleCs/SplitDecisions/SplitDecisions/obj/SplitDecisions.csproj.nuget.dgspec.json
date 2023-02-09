@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\STaylor\\source\\repos\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj": {}
+    "C:\\Users\\STaylor\\Documents\\GitHub\\split-decisions\\SplitDecPuzzleCs\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj": {}
   },
   "projects": {
-    "C:\\Users\\STaylor\\source\\repos\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj": {
+    "C:\\Users\\STaylor\\Documents\\GitHub\\split-decisions\\SplitDecPuzzleCs\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\STaylor\\source\\repos\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj",
+        "projectUniqueName": "C:\\Users\\STaylor\\Documents\\GitHub\\split-decisions\\SplitDecPuzzleCs\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj",
         "projectName": "SplitDecisions",
-        "projectPath": "C:\\Users\\STaylor\\source\\repos\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj",
+        "projectPath": "C:\\Users\\STaylor\\Documents\\GitHub\\split-decisions\\SplitDecPuzzleCs\\SplitDecisions\\SplitDecisions\\SplitDecisions.csproj",
         "packagesPath": "C:\\Users\\STaylor\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\STaylor\\source\\repos\\SplitDecisions\\SplitDecisions\\obj\\",
+        "outputPath": "C:\\Users\\STaylor\\Documents\\GitHub\\split-decisions\\SplitDecPuzzleCs\\SplitDecisions\\SplitDecisions\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\STaylor\\AppData\\Roaming\\NuGet\\NuGet.Config",
