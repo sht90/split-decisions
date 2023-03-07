@@ -8,7 +8,27 @@ namespace SplitDecisions
 {
     internal static class LetterCode
     {
+        private static readonly Dictionary<char, int> Encoder = Enumerable.Range(0, 26).ToDictionary(x => (char)((int)'a' + x), x => 1 << x);
+        private static readonly Dictionary<int, char> Decoder = Enumerable.Range(0, 26).ToDictionary(x => 1 << x, x => (char)((int)'a' + x));
 
+        public static int Convert(char letter)
+        {
+            return Encoder[letter];
+        }
+
+        public static List<char> Convert(int code)
+        {
+            List<char> letters = new() { };
+            for (int i = 0; i < 26; i++)
+            {
+                if ((code | i) > 0)
+                {
+                    letters.Add(Decoder[i]);
+                }
+            }
+            return letters;
+        }
+        /*
         public static int Convert(char letter)
         {
             return 1 << ((int)letter - (int)'a');
@@ -26,6 +46,6 @@ namespace SplitDecisions
                 }
             }
             return chars;
-        }
+        }*/
     }
 }
