@@ -8,8 +8,12 @@ namespace SplitDecisions
 {
     internal class WordPairsFinder
     {
-        public WordPairsFinder()
+        private int MinWordLength;
+        private int MaxWordLength;
+        public WordPairsFinder(BoardSettings settings)
         {
+            MinWordLength = settings.MinWordLength;
+            MaxWordLength = settings.MaxWordLength;
         }
 
         public List<WordPair> FindWordPairs(string usableWordsDictionary, string referenceWordsDictionary = "")
@@ -34,7 +38,7 @@ namespace SplitDecisions
             foreach (string line in lines)
             {
                 // Only add words that are a valid length
-                if (line.Length <= (int)WordLengths.MAX && line.Length >= (int)WordLengths.MIN)
+                if (line.Length <= this.MaxWordLength && line.Length >= this.MinWordLength)
                 {
                     // also, ensure everything has the same capitalization
                     words.Add(new Word(line.ToLower(), usability));
@@ -51,7 +55,7 @@ namespace SplitDecisions
             foreach (string line in usableLines)
             {
                 // Prune out all words that are too big or too small
-                if (line.Length > (int)WordLengths.MAX || line.Length < (int)WordLengths.MIN)
+                if (line.Length > this.MaxWordLength || line.Length < this.MinWordLength)
                 {
                     continue;
                 }
@@ -85,7 +89,7 @@ namespace SplitDecisions
             List<Word> rotatedWords = new() { };
             foreach (Word word in words) { rotatedWords.Add(word); }
             int l;
-            for (int r = 0; r < (int)WordLengths.MAX; r++)
+            for (int r = 0; r < this.MaxWordLength; r++)
             {
                 // Traverse each word with the given rotation
                 for (int i = 0; i < rotatedWords.Count; i++)
