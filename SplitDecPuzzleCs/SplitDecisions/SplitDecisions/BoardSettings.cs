@@ -15,7 +15,7 @@ namespace SplitDecisions
 			BoardWidth = boardWidth;
 			BoardHeight = boardHeight;
 			MinWordLength = Math.Max(minWordLength, (int)WordLengths.MIN);
-			MaxWordLength = Math.Min(maxWordLength, Math.Min((int)WordLengths.MAX, Math.Min(boardWidth - 1, boardHeight - 1)));
+			MaxWordLength = Math.Min(maxWordLength, Math.Min((int)WordLengths.MAX, Math.Max(boardWidth - 1, boardHeight - 1)));
 		}
 	}
 }
