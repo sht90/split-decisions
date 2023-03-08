@@ -27,7 +27,7 @@ namespace SplitDecisions
 
         private List<Word> GetWords(string usableWordsFile, string referenceWordsFile, bool sameDictionary = false)
         {
-            List<Word> words = new();
+            List<Word> words = new() { };
             // Find all the reference words
             string[] lines = File.ReadAllLines(referenceWordsFile);
             int usability = sameDictionary ? 1 : 0;
@@ -40,6 +40,7 @@ namespace SplitDecisions
                     words.Add(new Word(line.ToLower(), usability));
                 }
             }
+            Console.WriteLine("words list initial length = " + words.Count.ToString());
             // Sort the words list
             words.Sort();
             // if the usable dictionary and reference dictionary are the same, you're good to go!
@@ -68,6 +69,7 @@ namespace SplitDecisions
                 usableWord.Usability = 1;
                 words.Insert(~index, usableWord);
             }
+            Console.WriteLine("words list final length = " + words.Count.ToString());
             // Return a list of words, sorted by length then alphabetical order, with usability metadata
             return words;
         }
@@ -79,10 +81,13 @@ namespace SplitDecisions
             // It's very easy to find WordPairs where the split is at the very end of the words, like visit(ed/or).
             // We rotate the words so that we can find words where the split isn't at the very end of the words.
             // Eg, after one rotation, we catch WordPairs where the split is at the second-to-last index, like exam(in/pl)e.
-            List<Word> rotatedWords = words;
+            // shallow copy
+            List<Word> rotatedWords = new() { };
+            foreach (Word word in words) { rotatedWords.Add(word); }
             int l;
             for (int r = 0; r < (int)WordLengths.MAX; r++)
             {
+                //Console.WriteLine("rotatedWords.Count = " + rotatedWords.Count.ToString());
                 // Traverse each word with the given rotation
                 for (int i = 0; i < rotatedWords.Count; i++)
                 {
@@ -96,35 +101,40 @@ namespace SplitDecisions
                         if (l != nextWord.Letters.Length) { break; }
                         // If the next word doesn't have its first l-2 letters in common with the base word, no subsequent word will either.
                         if (baseWord.Letters[..(l-2)] != nextWord.Letters[..(l-2)]) { break; }
-                        // If the next word made it this far, subsequent words might also be a match.
-                        // If the next word is a match, add the WordPair to the list.
-                        if (baseWord.Letters[l-1] != nextWord.Letters[l-1] && baseWord.Letters[l-2] != baseWord.Letters[l-2])
-                        {
-                            string unrotatedBaseLetters = baseWord.Letters[r..] + baseWord.Letters[..r];
-                            string unrotatedNextLetters = nextWord.Letters[r..] + nextWord.Letters[..r];
-                            int totalUsability = baseWord.Usability + nextWord.Usability;
-                            Shape shape = new(l, l - r - 2);
-                            wordPairs.Append(new WordPair(shape, unrotatedBaseLetters, unrotatedNextLetters, totalUsability));
-                        }
-                        // If the next word made it this far, it has too much in common with the base word to be a match.
+                        // If the next word has either of the last 2 letters in common with the base word, next word might still match
+                        if (baseWord.Letters[l-1] == nextWord.Letters[l-1] || baseWord.Letters[l-2] == nextWord.Letters[l-2]) { continue; }
+                        // If the next word made it this far, baseWord and nextWord match.
+                        //Console.WriteLine("rotated base letters: " + baseWord.Letters);
+                        //Console.WriteLine("rotated next letters: " + nextWord.Letters);
+                        string unrotatedBaseLetters = baseWord.Letters[r..] + baseWord.Letters[..r];
+                        //Console.WriteLine("unrotated base letters: " + unrotatedBaseLetters);
+                        string unrotatedNextLetters = nextWord.Letters[r..] + nextWord.Letters[..r];
+                        //Console.WriteLine("unrotated next letters: " + unrotatedNextLetters);
+                        int totalUsability = baseWord.Usability + nextWord.Usability;
+                        Shape shape = new(l, l - r - 2);
+                        WordPair wordPair = new WordPair(shape, unrotatedBaseLetters, unrotatedNextLetters, totalUsability);
+                        //Console.WriteLine("correctly rotated wordPair: " + wordPair.ToString());
+                        wordPairs.Add(wordPair);
+                        // Subsequent words might also match baseWord
                     }
                     // After you're done using the baseWord, rotate it for next time
-                    if (l - 2 < r)
-                    {
-                        baseWord.Letters = baseWord.Letters[l - 1] + baseWord.Letters[..(l - 1)];
-                        rotatedWords[i] = baseWord;
-                    }
-                    else
+                    if (l - 2 <= r)
                     {
                         // if you're all out of rotations for baseWord, just remove it from the list
                         rotatedWords.RemoveAt(i);
+                        i--;
+                        continue;
                     }
+                    //Console.WriteLine("before change: rotatedWords[i].Letters = " + rotatedWords[i].Letters);
+                    rotatedWords[i].Letters = baseWord.Letters[l - 1] + baseWord.Letters[..(l - 1)];
+                    //Console.WriteLine("after change:  rotatedWords[i].Letters = " + rotatedWords[i].Letters);
                 }
                 // Before you move on to the next rotation, sort the list
                 if (rotatedWords.Count > 0)
                 {
                     rotatedWords.Sort();
                 }
+                //foreach (WordPair sdwp in wordPairs) { Console.WriteLine(sdwp.ToString()); }
             }
             // sort and return wordPairs
             wordPairs.Sort();
@@ -159,5 +169,4 @@ namespace SplitDecisions
             }
         }
     }
-
 }
