@@ -46,9 +46,42 @@ namespace SplitDecisions
             return String.Format("{0}({1}/{2}){3}", tmpBefore, Splits[0], Splits[1], tmpAfter);
         }
 
-        public string ShowConstraints()
+        public string ShowMistakeables()
         {
-            return Mistakeables.ToString() + Anchors.ToString();
+            string mistakeablesString = "[ ";
+            foreach (int code in Mistakeables)
+            {
+                if (code == 0)
+                {
+                    mistakeablesString += "[] ";
+                    continue;
+                }
+                mistakeablesString += "[";
+                List<char> letters = LetterCode.Decode(code);
+                foreach (char letter in letters)
+                {
+                    mistakeablesString += letter;
+                }
+                mistakeablesString += "] ";
+            }
+            mistakeablesString += " ]";
+            return mistakeablesString;
+        }
+
+        public string ShowAnchors()
+        {
+            string anchorsString = "[ ";
+            foreach (List<bool> anchor in Anchors)
+            {
+                anchorsString += "[ ";
+                foreach (bool a in anchor)
+                {
+                    anchorsString += a ? "1" : "0";
+                }
+                anchorsString += " ] ";
+            }
+            anchorsString += "]";
+            return anchorsString;
         }
 
         public int CompareTo(object? other)

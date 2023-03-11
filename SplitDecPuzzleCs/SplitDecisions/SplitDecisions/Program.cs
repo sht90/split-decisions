@@ -23,4 +23,4 @@ List<WordPair> wordPairs = wordPairsFinder.FindWordPairs(USABLE_DICTIONARY_PATH,
 // Find constraints for usable word pairs
 ConstraintsFinder constraintsFinder = new(settings);
 List<WordPair> boardWordPairs = constraintsFinder.FindConstraints(wordPairs);
-foreach (WordPair wordPair in boardWordPairs) { Console.WriteLine(wordPair.ToString() + wordPair.ShowConstraints()); }
+foreach (WordPair wordPair in boardWordPairs) { Console.WriteLine(wordPair.ToString() + "\n  " + wordPair.ShowMistakeables() + "\n  " + wordPair.ShowAnchors()); }
