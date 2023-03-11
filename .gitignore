@@ -2,3 +2,9 @@
 *.pyc
 .DS_Store
 SplitDecPuzzlePy/.DS_Store
+*.dll
+SplitDecPuzzleCs/SplitDecisions/.vs/SplitDecisions/xs/UserPrefs.xml
+*.dll
+SplitDecPuzzleCs/SplitDecisions/SplitDecisions/bin/Debug/net6.0/SplitDecisions.dll
+*.dll
+*.pdb
