@@ -62,6 +62,8 @@ namespace SplitDecisions
                 if (promptStartIndex == promptEndIndex)
                 {
                     wordPairs[i].Anchors.Add(Enumerable.Repeat(false, wordPair.Letters.Length).ToList());
+                    retList.Add(wordPair);
+                    continue;
                 }
                 // Now anchors are nontrivial.
                 // Determine which indexes we want to look at when comparing wordPair to others with the same prompt
