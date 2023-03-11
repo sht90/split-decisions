@@ -16,7 +16,7 @@ namespace SplitDecisions
         public string After;
         public int Usability;
         public List<int> Mistakeables;
-        public List<int> Anchors;
+        public List<List<bool>> Anchors;
 
         public WordPair(Shape shape, string word1, string word2, int usability)
         {
@@ -30,7 +30,7 @@ namespace SplitDecisions
             this.After = word1[(shape.Index + 2)..];
             this.Letters = Before + After;
             this.Mistakeables = new List<int> { };
-            this.Anchors = new List<int> { };
+            this.Anchors = new List<List<bool>> { };
             this.Usability = usability;
         }
 
@@ -44,6 +44,11 @@ namespace SplitDecisions
             string tmpBefore = String.Concat("-", Before.Length);
             string tmpAfter = String.Concat("-", After.Length);
             return String.Format("{0}({1}/{2}){3}", tmpBefore, Splits[0], Splits[1], tmpAfter);
+        }
+
+        public string ShowConstraints()
+        {
+            return Mistakeables.ToString() + Anchors.ToString();
         }
 
         public int CompareTo(object? other)

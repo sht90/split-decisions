@@ -11,12 +11,12 @@ namespace SplitDecisions
         private static readonly Dictionary<char, int> Encoder = Enumerable.Range(0, 26).ToDictionary(x => (char)((int)'a' + x), x => 1 << x);
         private static readonly Dictionary<int, char> Decoder = Enumerable.Range(0, 26).ToDictionary(x => 1 << x, x => (char)((int)'a' + x));
 
-        public static int Convert(char letter)
+        public static int Encode(char letter)
         {
             return Encoder[letter];
         }
 
-        public static List<char> Convert(int code)
+        public static List<char> Decode(int code)
         {
             List<char> letters = new() { };
             for (int i = 0; i < 26; i++)

@@ -16,7 +16,11 @@ BoardSettings settings = new(MINIMUM_USABILITY, BOARD_WIDTH, BOARD_LENGTH, MINIM
 string USABLE_DICTIONARY_PATH = "/Users/samtaylor/Documents/GitHub/split-decisions/SplitDecPuzzleCs/TextFiles/UsableDictionary.txt";
 string REFERENCE_DICTIONARY_PATH = "/Users/samtaylor/Documents/GitHub/split-decisions/SplitDecPuzzleCs/TextFiles/ReferenceDictionary.txt";
 
+// Find all possible word pairs from the starting dictionaries
 WordPairsFinder wordPairsFinder = new(settings);
 List<WordPair> wordPairs = wordPairsFinder.FindWordPairs(USABLE_DICTIONARY_PATH, REFERENCE_DICTIONARY_PATH);
-Console.WriteLine(wordPairs.Count.ToString());
-//foreach(WordPair wordPair in wordPairs) { Console.WriteLine(wordPair.ToString()); }
+
+// Find constraints for usable word pairs
+ConstraintsFinder constraintsFinder = new(settings);
+List<WordPair> boardWordPairs = constraintsFinder.FindConstraints(wordPairs);
+foreach (WordPair wordPair in boardWordPairs) { Console.WriteLine(wordPair.ToString() + wordPair.ShowConstraints()); }
