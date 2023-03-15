@@ -64,7 +64,7 @@ namespace SplitDecisions
                 }
                 mistakeablesString += "] ";
             }
-            mistakeablesString += " ]";
+            mistakeablesString += "]";
             return mistakeablesString;
         }
 
