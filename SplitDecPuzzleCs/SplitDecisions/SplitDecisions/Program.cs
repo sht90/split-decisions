@@ -28,3 +28,5 @@ List<WordPair> boardWordPairs = constraintsFinder.FindConstraints(wordPairs);
 string constrainedWordPairsLog = "";
 foreach (WordPair wordPair in boardWordPairs) { constrainedWordPairsLog += wordPair.ToString() + "  " + wordPair.ShowMistakeables() + "  " + wordPair.ShowAnchors() + "\n"; }
 File.WriteAllText(CONSTRAINED_WORDPAIRS_LOG, constrainedWordPairsLog);
+
+// Make the board
