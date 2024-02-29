@@ -138,13 +138,8 @@ def main():
         print(f'rotation {rotation}:')
         # Traverse all the words
         for i, current_word in reversed(list(enumerate(all_words))):
-            next_index = i
             # Loop through word pair candidates
-            while(True):
-                # Get the next word
-                next_index -= 1
-                if next_index <= 0:
-                    break
+            for next_index in range(i - 1, 0, -1):
                 next_word = all_words[next_index]
                 # Words are too dissimilar. Move on to new current_word
                 if (len(current_word) != len(next_word)
