@@ -46,6 +46,23 @@ def compare_words(word1, word2):
     return 0
 
 
+def compare_words_opp(word1, word2):
+    """
+    This returns the negative of compare_words for reverse sorting
+    
+    Arguments:
+        word1 {string} -- one word to compare to the other
+        word2 {string} -- one word to compare to the other
+    
+    Returns:
+        {int} --
+            -1 if word1 > word2
+            0 if word1 == word2
+            +1 if word1 < word2
+    """
+    return compare_words(word2, word1)
+
+
 def print_results(contents, output_file = None):
     """
     print results, either to console or to an output file
@@ -80,9 +97,9 @@ def main():
     all_words = [line.strip() for line in words_reference_file
                  if len(line.strip()) >= MIN_WORD_LENGTH
                  and len(line.strip()) <= MAX_WORD_LENGTH]
-    all_words.sort(key=functools.cmp_to_key(compare_words))
+    all_words.sort(key=functools.cmp_to_key(compare_words_opp))
     # Oh this also might change our effective MAX_WORD_LENGTH
-    longest_word_length = min(MAX_WORD_LENGTH, len(all_words[-1]))
+    longest_word_length = min(MAX_WORD_LENGTH, len(all_words[0]))
     print('Done parsing file!')
 
     # Keep a list for the formatted split decisions word pairs
@@ -118,20 +135,14 @@ def main():
     # Repeat this process for every rotation.
     for rotation in range(longest_word_length - 1):
         print(f'rotation {rotation}:')
-        # Once we finish looking at words, we'll rotate them and append
-        # them to this list.
-        rotated_words = []
         # Traverse all the words
-        for i, current_word in enumerate(all_words):
-            # If there's no next word after this one, exit the loop
-            if i == len(all_words) - 1:
-                break
+        for i, current_word in reversed(list(enumerate(all_words))):
             next_index = i
             # Loop through word pair candidates
             while(True):
                 # Get the next word
-                next_index += 1
-                if next_index == len(all_words) - 1:
+                next_index -= 1
+                if next_index <= 0:
                     break
                 next_word = all_words[next_index]
                 # Words are too dissimilar. Move on to new current_word
@@ -142,17 +153,19 @@ def main():
                 if (current_word[-2] == next_word[-2]
                     or current_word[-1] == next_word[-1]):
                     continue
-                # Words make a valid word pair. Woohoo! Add to results.
+                # Words make a valid word pair. Woohoo! Append results.
                 word_pair = f'{next_word[rotation:-2]}({current_word[-2:]}/{next_word[-2:]}){next_word[:rotation]}'
                 unrotated_word_1 = current_word[rotation:] + current_word[:rotation]
                 unrotated_word_2 = next_word[rotation:] + next_word[:rotation]
                 results.append(word_pair + f': {unrotated_word_1}, {unrotated_word_2}')
-            # If you can still make a valid rotation with this word...
-            if len(current_word) > rotation + 2:
-                # rotate is by 1 and add it to rotated_words.
-                rotated_words.append(f'{current_word[-1]}{current_word[:-1]}')
-        rotated_words.sort(key=functools.cmp_to_key(compare_words))
-        all_words = rotated_words
+            # If you can't rotate a word anymore, leave it behind
+            if len(current_word) <= rotation + 2:
+                # words are sorted so you don't even need to pop(i)
+                all_words.pop()
+                continue
+            # Rotate this word for next iteration
+            all_words[i] = (f'{current_word[-1]}{current_word[:-1]}')
+        all_words.sort(key=functools.cmp_to_key(compare_words_opp))
 
     # We're done the hard part! Woohoo! Sort and print the results.
     results.sort(key=functools.cmp_to_key(compare_words))
