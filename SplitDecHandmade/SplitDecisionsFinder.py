@@ -7,6 +7,7 @@ Created on Wed Feb 28 09:33:51 2024
 # imports
 
 import functools
+from WordPair import WordPair
 
 # values
 
@@ -154,10 +155,11 @@ def main():
                     or current_word[-1] == next_word[-1]):
                     continue
                 # Words make a valid word pair. Woohoo! Append results.
-                word_pair = f'{next_word[rotation:-2]}({current_word[-2:]}/{next_word[-2:]}){next_word[:rotation]}'
-                unrotated_word_1 = current_word[rotation:] + current_word[:rotation]
-                unrotated_word_2 = next_word[rotation:] + next_word[:rotation]
-                results.append(word_pair + f': {unrotated_word_1}, {unrotated_word_2}')
+                word_pair = WordPair(
+                    current_word[rotation:] + current_word[:rotation],
+                    next_word[rotation:] + next_word[:rotation],
+                    len(current_word) - 2 - rotation)
+                results.append(f'{word_pair}: {word_pair.word1}, {word_pair.word2}')
             # If you can't rotate a word anymore, leave it behind
             if len(current_word) <= rotation + 2:
                 # words are sorted so you don't even need to pop(i)
