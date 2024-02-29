@@ -6,7 +6,7 @@ Split Decisions is easily my favorite word puzzle, and one of my favorite puzzle
 
 My ultimate goal with this repository is to be able to quickly and easily create my own Split Decisions puzzles -- whether to solve on my own, or to give to my friends.
 
-# Files
+# Contents
 
 ## Outdated
 
@@ -27,6 +27,22 @@ Populate a skeleton of a Split Decisions board with words that would form a vali
 ### SplitDecisionsFinder.py
 
 Find all valid Split Decisions word pairs and print them to .txt file
+
+## SplitDecPuzzlePy
+
+This folder contains an incomplete attempt at automatically generating Split Decisions puzzles in Python.
+
+My most up-to-date attempt at automatically generating Split Decisions puzzles is in a separate repo now, SplitDecisionsCS.
+
+## SplitDecPuzzleGo
+
+This folder contains an incomplete attempt at automatically generating Split Decisions puzzles in Go.
+
+My most up-to-date attempt at automatically generating Split Decisions puzzles is in a separate repo now, SplitDecisionsCS.
+
+## SplitDecHandmade
+
+This folder contains tools that help me make my own Split Decisions puzzles
 
 ## Miscellaneous
 
