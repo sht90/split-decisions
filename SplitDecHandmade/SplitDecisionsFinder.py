@@ -120,7 +120,7 @@ def find_word_pairs(words_list):
                 words_list.pop()
                 continue
             # Rotate this word for next iteration.
-            words_list[i] = (f'{current_word[-1]}{current_word[:-1]}')
+            words_list[i] = f'{current_word[-1]}{current_word[:-1]}'
         words_list.sort(key=functools.cmp_to_key(compare_words_opp))
     return results
 
