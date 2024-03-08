@@ -69,8 +69,6 @@ def score_interesting(word1, word2):
     except Exception as e:
         print(f'Something else wrong?\n{word1=}\n{word2=}\n{e=}')
         return 1
-    #print('success!?!?!')
-
     # Lightly prioritize words that have an unusual amount of consecutive consonants or vowels
     most_consecutive_consonants = 0
     most_consecutive_vowels = 0
@@ -117,12 +115,6 @@ def main():
     # Oh, we also need to parse the IPA dictionary
     with open(IPA_DICTIONARY, 'r', encoding='utf-8') as fp:
         (d,) = json.load(fp)['en_US']
-        for k, v in d.items():
-            kstrp = k.replace('"', '')
-            kstrp2 = kstrp.replace('"','')
-            sample_string = 'hi'
-            res = v if (',' not in v) else v.split(', ')[0]
-            break
         global WORD_TO_IPA
         WORD_TO_IPA = {k.replace('"', ''): (v if (',' not in v) else v.split(', ')[0] ) for k, v in d.items()}
 
