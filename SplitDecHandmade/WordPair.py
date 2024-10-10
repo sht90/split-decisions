@@ -16,5 +16,9 @@ class WordPair:
             self.letters_bits |= self._letter_code.encode(letter)
 
 
+    def get_prompt(self):
+        return '-' * self.shape.index + f'({self.word1[self.shape.index:self.index + 2]}/{self.word2[self.shape.index:self.shape.index + 2]})' + '-' * (len(self.word1) - self.shape.index + 2)
+
+
     def __repr__(self):
         return f'{self.word1[:self.shape.index]}({self.word1[self.shape.index:self.index + 2]}/{self.word2[self.shape.index:self.shape.index + 2]}){self.word1[self.shape.index + 2:]}'
