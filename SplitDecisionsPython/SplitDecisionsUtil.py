@@ -29,6 +29,18 @@ def compare_words_opposite(word1, word2):
     return compare_words(word2, word1)
 
 
+def compare_shapes(shape1, shape2):
+    """
+    Sort shapes by their value. This is the same as sorting by length,
+    then by index.
+    """
+    if shape1.value < shape2.value:
+        return -1
+    if shape1.value > shape2.value:
+        return 1
+    return 0
+
+
 def encode(letters):
     """
     Encode a string with lowercase letters (ie in between a and z)
