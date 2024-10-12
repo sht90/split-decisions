@@ -9,7 +9,7 @@ import numpy as np
 
 def compare_words(word1, word2):
     """
-    Sort words by length, then alphabetically
+    Compare words by length, then alphabetically
     """
     if (len(word1) < len(word2)):
         return -1
@@ -31,12 +31,31 @@ def compare_words_opposite(word1, word2):
 
 def compare_shapes(shape1, shape2):
     """
-    Sort shapes by their value. This is the same as sorting by length,
-    then by index.
+    Compare shapes by their value. This is the same as comparing by
+    length, then by index.
     """
     if shape1.value < shape2.value:
         return -1
     if shape1.value > shape2.value:
+        return 1
+    return 0
+
+
+def compare_word_pairs(wp1, wp2):
+    """
+    Compare word pairs by shape, then by prompt, then by solution
+    """
+    compare_shapes_result = compare_shapes(wp1.shape, wp2.shape)
+    if (compare_shapes_result) != 0:
+        return compare_shapes_result
+    for wp1_split, wp2_split in zip(wp1.splits, wp2.splits):
+        if wp1_split < wp2_split:
+            return -1
+        if wp1_split > wp2_split:
+            return 1
+    if wp1.letters < wp2.letters:
+        return -1
+    if wp1.letters > wp2.letters:
         return 1
     return 0
 
