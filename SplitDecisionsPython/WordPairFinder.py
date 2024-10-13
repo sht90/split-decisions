@@ -92,7 +92,7 @@ class WordPairFinder:
                     if (current_letters[-2] == next_letters[-2]
                         or current_letters[-1] == next_letters[-1]):
                         continue
-                    # Words for a word pair!
+                    # Words form a word pair!
                     shape = Shape(len(current_letters),
                                   len(current_letters) - r - 2)
                     unrotated_current = f'{current_letters[r:]}{current_letters[:r]}'
