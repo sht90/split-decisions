@@ -37,3 +37,7 @@ class WordPair:
 
     def __getitem__(self, key):
         return self._items[key]
+    
+    def __repr__(self):
+        split1, split2 = self.splits
+        return f'{self.before}({split1}/{split2}){self.after}'

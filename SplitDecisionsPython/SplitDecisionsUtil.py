@@ -7,27 +7,6 @@ Functions for generating Split Decisions puzzles
 
 import numpy as np
 
-def compare_words(word1, word2):
-    """
-    Compare words by length, then alphabetically
-    """
-    if (len(word1) < len(word2)):
-        return -1
-    if (len(word1) > len(word2)):
-        return 1
-    if (word1 < word2):
-        return -1
-    if (word1 > word2):
-        return 1
-    return 0
-
-
-def compare_words_opposite(word1, word2):
-    """
-    This returns the opposite of compare_words for reverse sorting
-    """
-    return compare_words(word2, word1)
-
 
 def compare_shapes(shape1, shape2):
     """
@@ -43,7 +22,8 @@ def compare_shapes(shape1, shape2):
 
 def compare_word_pairs(wp1, wp2):
     """
-    Compare word pairs by shape, then by prompt, then by solution
+    Compare word pairs for internal organization:
+    compare by shape, then by prompt, then by solution
     """
     compare_shapes_result = compare_shapes(wp1.shape, wp2.shape)
     if (compare_shapes_result) != 0:
@@ -57,6 +37,26 @@ def compare_word_pairs(wp1, wp2):
         return -1
     if wp1.letters > wp2.letters:
         return 1
+    return 0
+
+
+def compare_word_pairs_display(wp1, wp2):
+    """
+    Compare word pairs for easy display:
+    compare by shape, then alphabetically
+    """
+    compare_shapes_result = compare_shapes(wp1.shape, wp2.shape)
+    if (compare_shapes_result) != 0:
+        return compare_shapes_result
+    if wp1.letters < wp2.letters:
+        return -1
+    if wp1.letters > wp2.letters:
+        return 1
+    for wp1_split, wp2_split in zip(wp1.splits, wp2.splits):
+        if wp1_split < wp2_split:
+            return -1
+        if wp1_split > wp2_split:
+            return 1
     return 0
 
 
