@@ -35,9 +35,42 @@ class WordPair:
         self.anchors = []
         self.usability = usability
 
+    def get_prompt(self):
+        split1, split2 = self.splits
+        prompt_before = '-' * len(self.before)
+        prompt_after = '-' * len(self.after)
+        return f'{prompt_before}({split1}/{split2}){prompt_after}'
+    
+    def show_mistakeables(self):
+        mistakeables_strs = []
+        for letter_mistakeables in self.mistakeables:
+            if not letter_mistakeables:
+                mistakeables_strs.append('-')
+                continue
+            letters = ''.join(sdu.decode(letter_mistakeables))
+            mistakeables_strs.append(letters)
+        s = ', '.join(mistakeables_strs)
+        return f'[{s}]'
+
+    def show_anchors(self):
+        anchor_strs = []
+        for anchor in self.anchors:
+            a = ''
+            length = len(self.letters)
+            for i in range(length):
+                a += str(int((anchor & (1 << (length - i - 1))) > 0))
+            anchor_strs.append(a)
+        s = ', '.join(anchor_strs)
+        return f'[{s}]'
+
     def __getitem__(self, key):
         return self._items[key]
     
     def __repr__(self):
         split1, split2 = self.splits
         return f'{self.before}({split1}/{split2}){self.after}'
+    
+    def __eq__(self, other):
+        return (self.shape == other.shape
+                and self.word1 == other.word1
+                and self.word2 == other.word2)
