@@ -6,6 +6,7 @@ October 12 2024
 import SplitDecisionsUtil as sdu
 from functools import cmp_to_key
 from itertools import combinations_with_replacement as combos
+import numpy as np
 
 class ConstraintsFinder:
     def __init__(self, min_usability=2):
@@ -22,72 +23,80 @@ class ConstraintsFinder:
 
 
     def get_constraints(self, word_pairs):
-        prompt_start = 0
-        prompt_end = -1
-        # Traverse each word pair in the list
-        for i, word_pair in enumerate(word_pairs):
-            # Find the start and end of each prompt
-            if i > prompt_end:
-                prompt_start = i
-                prompt_end = len(word_pairs)
-                for j, other in enumerate(word_pairs[i + 1:]):
-                    if word_pair.get_prompt() != other.get_prompt():
-                        prompt_end = j + i
-                        break
-            # Constraints only matter for placing word pairs on the
-            # board, so they only matter for usable word pairs
-            if word_pair.usability < self.min_usability:
+        wps_by_prompt = []
+        word_pairs.sort(key=cmp_to_key(sdu.compare_word_pairs_by_prompt))
+        current_prompt = []
+        for i, wp in enumerate(word_pairs):
+            current_prompt.append(wp)
+            if i == (len(word_pairs) - 1):
+                wps_by_prompt.append(current_prompt)
+                break
+            if wp.prompt_id != word_pairs[i + 1].prompt_id:
+                wps_by_prompt.append(current_prompt)
+                current_prompt = []
+        for prompt in wps_by_prompt:
+            # handle the trivial case for mistakeables and anchors
+            if len(prompt) == 1:
+                wp = prompt[0]
+                if wp.usability < self.min_usability:
+                    continue
+                wp.mistakeables = [0]
+                wp.anchors = [0]
+                self.word_pairs.append(wp)
                 continue
-            # Get mistakeables
-            word_pair.mistakeables = [0 for _ in word_pair.letters]
-            # Look at every word pair with the same prompt
-            for other in word_pairs[prompt_start:prompt_end]:
-                # flag each dissimilar letter as a mistakeable
-                for l, (l1, l2) in enumerate(zip(word_pair.letters,
-                                                 other.letters)):
-                    if l1 != l2:
-                        word_pair.mistakeables[l] |= sdu.encode(l2)
-            # Get anchors
-            # Each anchor is a bit string where, if all the indices
-            # with 1 had their correct letter, the prompt only has one
-            # possible solution.
-            word_pair.anchors = []
-            # trivial case
-            if prompt_start == prompt_end:
-                word_pair.anchors.append(0)
-                self.word_pairs.append(word_pair)
-                continue
-            # non-trivial cases
-            # traverse all possible combinations of indices
-            for size in range(1, len(word_pair.letters) + 1):
-                letter_indices = list(range(len(word_pair.letters)))
-                for combo in combos(letter_indices, size):
-                    # Does this combination constrain the word pair?
-                    constrains_all = True
-                    # Traverse the prompt again
-                    for k in range(prompt_start, prompt_end):
-                        if k == i:
-                            continue
-                        constrains = False
-                        # flag each dissimilar letter as a possible anchor
-                        other = word_pairs[k]
-                        for index in combo:
-                            constrains = constrains or word_pair.letters[index] != other.letters[index]
-                        if not constrains:
-                            constrains_all = False
-                            break
-                    if constrains_all:
-                        index_combo = 0
-                        for index in combo:
-                            index_combo |= (1 << (len(word_pair.letters) - 1 - index))
-                        word_pair.anchors.append(index_combo)
-                if word_pair.anchors:
-                    break
-            if not word_pair.anchors:
-                print(f'No anchors found for word pair {word_pair}. This should be impossible')
-            self.word_pairs.append(word_pair)
-        return self.word_pairs
 
-            
+            # Do setup for mistakeables.
+            # Consider the prompt -(ff/xp)--- for effort/export and effect/expect
+
+            # get each word letter-by-letter, broken down in its numerical encoding
+            # so in the example that's
+            # [[e, o, r, t]
+            #  [e, e, c, t]]
+            all_bits = [(wp.letters_bits) for wp in prompt]
+
+            # bitwise-or together the values for each letter
+            # So now in our example we have
+            # [e, eo, cr, t]
+            all_bits_by_letter = [np.bitwise_or.reduce(b) for b in zip(*all_bits)]
+
+            # now traverse every word pair in the prompt
+            for wp in prompt:
+                # skip over words that we won't consider for putting on the board
+                if wp.usability < self.min_usability:
+                    continue
+                # the mistakeables at each letter are the dissimilar letters
+                # so for the effort/export wordpair,
+                # [-, e, c, -]
+                wp.mistakeables = [ab & ~b for ab, b in zip(all_bits_by_letter, wp.letters_bits)]
+
+                # Now find anchors!
+                # An anchor is going to have the form of a combination
+                # of indices where if the indices marked 1 are filled
+                # in, a solver has all the info they need to solve that
+                # word pair. I.e. those indices differentiate that word
+                # pair from every other word pair with the same prompt.
+                letter_indices = list(range(len(wp.letters)))
+                # Traverse all combinations of indices. Accept all
+                # combos with the same size.
+                for size in range(1, len(wp.letters) + 1):
+                    for combo in combos(letter_indices, size):
+                        # Get relevant letters_bits
+                        others_bits = [[other.letters_bits[index] for index in combo] for other in prompt if other != wp]
+                        this_bits = [wp.letters_bits[index] for index in combo]
+                        # all other word pairs in this prompt must have
+                        #   any of the bits in this combo be unique
+                        if all([any([ob != b for ob, b in zip(other_bits, this_bits)]) for other_bits in others_bits]):
+                            # write the anchor as a bit string
+                            index_combo = 0
+                            for index in combo:
+                                index_combo |= (1 << (len(wp.letters) - 1 - index))
+                            # and add to anchors list
+                            wp.anchors.append(index_combo)
+                    if wp.anchors:
+                        break
+                if not wp.anchors:
+                    print(f'No anchors found for word pair {wp}. This should be impossible')
+                self.word_pairs.append(wp)
+        return self.word_pairs
 
             

@@ -40,6 +40,17 @@ def compare_word_pairs(wp1, wp2):
     return 0
 
 
+def compare_word_pairs_by_prompt(wp1, wp2):
+    """
+    Compare word pairs by prompt
+    """
+    if wp1.prompt_id < wp2.prompt_id:
+        return -1
+    if wp1.prompt_id < wp2.prompt_id:
+        return 1
+    return 0
+
+
 def compare_word_pairs_display(wp1, wp2):
     """
     Compare word pairs for easy display:
@@ -60,7 +71,7 @@ def compare_word_pairs_display(wp1, wp2):
     return 0
 
 
-def encode(letters):
+def encode(letter):
     """
     Encode a string with lowercase letters (ie in between a and z)
     as a bit string, where the index of that letter in the alphabet is
@@ -70,8 +81,7 @@ def encode(letters):
     E.g.    z -> b 10 0000 0000 0000 0000 0000 0000
     E.g. abcd -> b 00 0000 0000 0000 0000 0000 1111
     """
-    codes = [1 << (ord(letter) - ord('a')) for letter in letters]
-    return np.bitwise_or.reduce(codes)
+    return 1 << (ord(letter) - ord('a'))
 
 
 def decode (code):

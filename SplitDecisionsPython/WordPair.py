@@ -26,7 +26,7 @@ class WordPair:
         self.before = word1[:shape.index]
         self.after = word1[shape.index + 2:]
         self.letters = self.before + self.after
-        self.letters_bits = sdu.encode(self.letters)
+        self.letters_bits = [sdu.encode(letter) for letter in self.letters]
         self._items = [letter for letter in self.before]
         self._items.extend([self.splits[0]])
         self._items.extend([self.splits[1]])
@@ -34,13 +34,30 @@ class WordPair:
         self.mistakeables = []
         self.anchors = []
         self.usability = usability
+        self.prompt = self._get_prompt()
+        self.prompt_id = self._get_prompt_id()
 
-    def get_prompt(self):
+    def _get_prompt(self):
         split1, split2 = self.splits
         prompt_before = '-' * len(self.before)
         prompt_after = '-' * len(self.after)
         return f'{prompt_before}({split1}/{split2}){prompt_after}'
     
+    def _get_prompt_id(self):
+        """
+        like with shape, get a single unique int value for prompt
+        there's 4 possible letters in each prompt
+        and I think with 12 letters there's 78 shapes?
+        That's a lot, but not impossible
+        """
+        # character_id_n = ord(self.splits[?] - ord('a') * 26^(n-1))
+        character_id = (ord(self.splits[0][0]) - 97)
+        character_id += (ord(self.splits[0][1]) - 97) * 26
+        character_id += (ord(self.splits[1][0]) - 97) * 676
+        character_id += (ord(self.splits[1][1]) - 97) * 17576
+        shape_id = self.shape.value * 456976
+        return character_id + shape_id
+
     def show_mistakeables(self):
         mistakeables_strs = []
         for letter_mistakeables in self.mistakeables:
@@ -72,5 +89,5 @@ class WordPair:
     
     def __eq__(self, other):
         return (self.shape == other.shape
-                and self.word1 == other.word1
-                and self.word2 == other.word2)
+                and self.words[0] == other.words[0]
+                and self.words[1] == other.words[1])
