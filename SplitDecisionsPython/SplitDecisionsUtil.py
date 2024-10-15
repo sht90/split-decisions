@@ -59,15 +59,12 @@ def compare_word_pairs_display(wp1, wp2):
     compare_shapes_result = compare_shapes(wp1.shape, wp2.shape)
     if (compare_shapes_result) != 0:
         return compare_shapes_result
-    if wp1.letters < wp2.letters:
+    wp1str = f'{wp1}'
+    wp2str = f'{wp2}'
+    if wp1str < wp2str:
         return -1
-    if wp1.letters > wp2.letters:
+    if wp1str > wp2str:
         return 1
-    for wp1_split, wp2_split in zip(wp1.splits, wp2.splits):
-        if wp1_split < wp2_split:
-            return -1
-        if wp1_split > wp2_split:
-            return 1
     return 0
 
 
