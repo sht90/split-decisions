@@ -40,7 +40,7 @@ class ConstraintsFinder:
                 wp = prompt[0]
                 if wp.usability < self.min_usability:
                     continue
-                wp.mistakeables = [0]
+                wp.mistakeables = [0 for _ in wp.letters]
                 wp.anchors = [0]
                 self.word_pairs.append(wp)
                 continue
@@ -97,7 +97,6 @@ class ConstraintsFinder:
                 if not wp.anchors:
                     print(f'No anchors found for word pair {wp}. This should be impossible')
                 self.word_pairs.append(wp)
-        self.word_pairs.sort(key=cmp_to_key(sdu.compare_word_pairs_display))
         return self.word_pairs
 
             
