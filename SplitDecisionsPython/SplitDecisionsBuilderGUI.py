@@ -18,8 +18,8 @@ from tkinter import ttk
 root = tk.Tk()
 frame = ttk.Frame(root, padding=10)
 frame.grid()
-ttk.Label(frame, text="Hello World!").grid(column=0, row=0)
-ttk.Button(frame, text="Quit", command=root.destroy).grid(column=1, row=1)
+#ttk.Label(frame, text="Hello World!").grid(column=0, row=0)
+#ttk.Button(frame, text="Quit", command=root.destroy).grid(column=1, row=1)
 
 # Search bar
 # I expect to modify this with a bunch of different criteria over time.
@@ -34,7 +34,42 @@ ttk.Button(frame, text="Quit", command=root.destroy).grid(column=1, row=1)
 # able to be sorted in reverse order or in random order. You should be
 # able to "reroll" the random order
 
+class ShapeSearcher:
+    def __init__(self):
+        self.letters_before = []
+        self.letters_after = []
+        self.split_top = ['', '']
+        self.split_bottom = ['', '']
+    
+    def add_right(self):
+        self.letters_after.append('')
+
+    def add_left(self):
+        self.letters_before.insert(0, '')
+
+    def subtract_right(self):
+        self.letters_after.pop()
+
+    def subtract_left(self):
+        self.letters_before.pop(0)
+
+    def render(self, parent):
+        frame = ttk.Frame(parent)
+        frame.grid()
+        split_index = len(self.letters_before)
+        after_index = len(self.letters_before) + 2
+        for i, _ in enumerate(self.letters_before):
+            ttk.Entry(frame, textvariable=self.letters_before[i]).grid(column=i, row=1, rowspan=2)
+        for i, _ in enumerate(self.split_top):
+            ttk.Entry(frame, textvariable=self.split_top[i]).grid(column=i + split_index, row=0, rowspan=2)
+        for i, _ in enumerate(self.split_bottom):
+            ttk.Entry(frame, textvariable=self.split_bottom[i]).grid(column=i + split_index, row=2, rowspan=2)
+        for i, _ in enumerate(self.letters_after):
+            ttk.Entry(frame, textvariable=self.letters_after[i]).grid(column=i + after_index, row=1, rowspan=2)
+
 def main():
+    ss = ShapeSearcher()
+    ss.render(frame)
     root.mainloop()
 
 if __name__ == '__main__':
