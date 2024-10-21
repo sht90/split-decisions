@@ -5,8 +5,6 @@ October 10 2024
 Functions for generating Split Decisions puzzles
 """
 
-import numpy as np
-
 
 def compare_shapes(shape1, shape2):
     """

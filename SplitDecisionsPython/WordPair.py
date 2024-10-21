@@ -3,7 +3,7 @@ Sam Taylor
 October 10 2024
 """
 
-import SplitDecisionsUtil as sdu 
+import SplitDecisionsUtil as sdu
 
 class WordPair:
     """
@@ -25,6 +25,8 @@ class WordPair:
             word2[shape.index:shape.index + 2]]
         self.before = word1[:shape.index]
         self.after = word1[shape.index + 2:]
+        self.search = [[sdu.encode(letter) for letter in word1],
+                       [sdu.encode(letter) for letter in word2]]
         self.letters = self.before + self.after
         self.letters_bits = [sdu.encode(letter) for letter in self.letters]
         self._items = [letter for letter in self.before]

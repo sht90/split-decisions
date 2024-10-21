@@ -12,6 +12,9 @@ website: https://split-decisions.us/
 
 import tkinter as tk
 from tkinter import ttk
+from Shape import Shape
+from WordPair import WordPair
+import SplitDecisionsUtil as sdu 
 
 #ttk.Label(frame, text="Hello World!").grid(column=0, row=0)
 #ttk.Button(frame, text="Quit", command=root.destroy).grid(column=1, row=1)
@@ -79,6 +82,45 @@ class ShapeSearcher:
             ttk.Entry(frame, textvariable=self.letters_after[i]).grid(column=i + after_col, row=1, rowspan=2)
         ttk.Button(frame, command=self.add_right, text='+').grid(column=last_col, row=1)
         ttk.Button(frame, command=self.subtract_right, text='-').grid(column=last_col, row=2)
+        self.search()
+
+    def search(self):
+        # Get shape
+        index = len(self.letters_before)
+        length = len(self.letters_before) + 2 + len(self.letters_after)
+        if length <= 2 or length > 12:
+            print('invalid shape')
+            return
+        shape = Shape(length, index)
+        # Get search critera
+        search_before = [sdu.encode(letter) if letter else 0 for letter in self.letters_before]
+        search_split_top = [sdu.encode(letter) if letter else 0 for letter in self.split_top]
+        search_split_bottom = [sdu.encode(letter) if letter else 0 for letter in self.split_bottom]
+        search_after = [sdu.encode(letter) if letter else 0 for letter in self.letters_after]
+        # Get the human readable equivalent of search criteria
+        search_before_readable = [letter if letter else '-' for letter in self.letters_before]
+        search_split_top_readable = [letter if letter else '-' for letter in self.split_top]
+        search_split_bottom_readable = [letter if letter else '-' for letter in self.split_bottom]
+        search_after_readable = [letter if letter else '-' for letter in self.letters_after]
+        # You have to make deep copies for this to work
+        s1 = [e for e in search_before]
+        s1.extend([e for e in search_split_top])
+        s1.extend([e for e in search_after])
+        s2 = [e for e in search_before]
+        s2.extend([e for e in search_split_bottom])
+        s2.extend([e for e in search_after])
+        sr1 = [e for e in search_before_readable]
+        sr1.extend([e for e in search_split_top_readable])
+        sr1.extend([e for e in search_after_readable])
+        sr2 = [e for e in search_before_readable]
+        sr2.extend([e for e in search_split_bottom_readable])
+        sr2.extend([e for e in search_after_readable])
+        #valid_word_pairs = [word_pair for word_pair in self.word_pairs_by_shape[shape.value]
+         #                   if (all([s | s1 == s for s in word_pair.search[0]])
+          #                       and all([s | s2 == s for s in word_pair.search[1]]))]
+        print(f'{shape.value=}')
+        print(f'{s1} {sr1}\n{s2} {sr2}')
+
 
 def main():
     # Make tk window
