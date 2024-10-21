@@ -13,11 +13,6 @@ website: https://split-decisions.us/
 import tkinter as tk
 from tkinter import ttk
 
-# Make tk window
-
-root = tk.Tk()
-frame = ttk.Frame(root, padding=10)
-frame.grid()
 #ttk.Label(frame, text="Hello World!").grid(column=0, row=0)
 #ttk.Button(frame, text="Quit", command=root.destroy).grid(column=1, row=1)
 
@@ -40,34 +35,57 @@ class ShapeSearcher:
         self.letters_after = []
         self.split_top = ['', '']
         self.split_bottom = ['', '']
+        self.parent = None
     
     def add_right(self):
+        print('adding right...')
         self.letters_after.append('')
+        self.render()
 
     def add_left(self):
+        print('adding left...')
         self.letters_before.insert(0, '')
+        self.render()
 
     def subtract_right(self):
+        print('subtracting right...')
         self.letters_after.pop()
+        self.render()
 
     def subtract_left(self):
+        print('subtracting left...')
         self.letters_before.pop(0)
+        self.render()
 
-    def render(self, parent):
-        frame = ttk.Frame(parent)
+    def render(self, parent=None):
+        if not parent:
+            self.parent = parent
+        print('rendering...')
+        frame = ttk.Frame(self.parent)
         frame.grid()
-        split_index = len(self.letters_before)
-        after_index = len(self.letters_before) + 2
+        before_col = 1
+        split_col = len(self.letters_before) + before_col
+        after_col = 2 + split_col
+        last_col = len(self.letters_after) + after_col
+        ttk.Button(frame, command=self.add_left, text='+').grid(column=0, row=1)
+        ttk.Button(frame, command=self.subtract_left, text='-').grid(column=0, row=2)
         for i, _ in enumerate(self.letters_before):
-            ttk.Entry(frame, textvariable=self.letters_before[i]).grid(column=i, row=1, rowspan=2)
+            ttk.Entry(frame, textvariable=self.letters_before[i]).grid(column=i + before_col, row=1, rowspan=2)
         for i, _ in enumerate(self.split_top):
-            ttk.Entry(frame, textvariable=self.split_top[i]).grid(column=i + split_index, row=0, rowspan=2)
+            ttk.Entry(frame, textvariable=self.split_top[i]).grid(column=i + split_col, row=0, rowspan=2)
         for i, _ in enumerate(self.split_bottom):
-            ttk.Entry(frame, textvariable=self.split_bottom[i]).grid(column=i + split_index, row=2, rowspan=2)
+            ttk.Entry(frame, textvariable=self.split_bottom[i]).grid(column=i + split_col, row=2, rowspan=2)
         for i, _ in enumerate(self.letters_after):
-            ttk.Entry(frame, textvariable=self.letters_after[i]).grid(column=i + after_index, row=1, rowspan=2)
+            ttk.Entry(frame, textvariable=self.letters_after[i]).grid(column=i + after_col, row=1, rowspan=2)
+        ttk.Button(frame, command=self.add_right, text='+').grid(column=last_col, row=1)
+        ttk.Button(frame, command=self.subtract_right, text='-').grid(column=last_col, row=2)
 
 def main():
+    # Make tk window
+    root = tk.Tk()
+    frame = ttk.Frame(root, padding=10)
+    frame.grid()
+
     ss = ShapeSearcher()
     ss.render(frame)
     root.mainloop()
