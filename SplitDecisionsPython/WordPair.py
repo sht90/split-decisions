@@ -4,6 +4,7 @@ October 10 2024
 """
 
 import SplitDecisionsUtil as sdu 
+import numpy as np
 
 class WordPair:
     """
@@ -27,6 +28,7 @@ class WordPair:
         self.after = word1[shape.index + 2:]
         self.letters = self.before + self.after
         self.letters_bits = [sdu.encode(letter) for letter in self.letters]
+        self.reduced_bits = np.bitwise_or.reduce(self.letters_bits)
         self._items = [letter for letter in self.before]
         self._items.extend([self.splits[0]])
         self._items.extend([self.splits[1]])
