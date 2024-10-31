@@ -30,8 +30,8 @@ class WordPair:
         self.letters_bits = [sdu.encode(letter) for letter in self.letters]
         self.reduced_bits = np.bitwise_or.reduce(self.letters_bits)
         self._items = [letter for letter in self.before]
-        self._items.extend([self.splits[0]])
-        self._items.extend([self.splits[1]])
+        self._items.append(self.splits[0])
+        self._items.append(self.splits[1])
         self._items.extend([letter for letter in self.after])
         self.mistakeables = []
         self.anchors = []
