@@ -44,6 +44,10 @@ My most up-to-date attempt at automatically generating Split Decisions puzzles i
 
 This folder contains tools that help me make my own Split Decisions puzzles
 
+## SplitDecBuilder
+
+This folder is made in service of a tool that will help me build Split Decisions puzzles. I specifically envision a GUI tool made in Godot (or maybe Swift?) where I could, for example, search for word pairs and then drag-and-drop them onto a board.
+
 ## Miscellaneous
 
 Many programs within this repository process large text files. I've opted to omit the large text files from this repository for now, but this is a list of every large text file that I've used or considered using:
