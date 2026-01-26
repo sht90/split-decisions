@@ -3,7 +3,8 @@ Sam Taylor
 
 Split Decisions Cell Drawing Utility
 
-The goal of this file is to draw various cells
+The goal of this file is to draw various cells for use in a Split
+Decisions board, which I hope to make in Godot.
 """
 
 import drawsvg as draw
