@@ -30,13 +30,27 @@ def draw_edge_cell(width, height, background_color, foreground_color, stroke_thi
     canvas.append(draw.Line(height, 0, height, width, stroke=foreground_color, stroke_width=stroke_thickness))
     return canvas
 
-def draw_steep_curve():
+def draw_steep_curve(width, height, background_color, foreground_color, stroke_thickness):
     """draw the steep curve of the 'split' in a word pair"""
-    pass
+    canvas = draw_empty_cell(width, height, background_color)
+    # This draws a circle "off-screen," past the edge of the cell, in a
+    # way that creates the circular arc we're interested in.
+    # But then clip the path to the cell
+    clip = draw.ClipPath()
+    clip.append(draw.Rectangle(0, 0, width, height))
+    canvas.append(draw.Circle(width * 3, height * 5, height * 5, fill='none', stroke=foreground_color, stroke_width=stroke_thickness, clip_path=clip))
+    return canvas
 
-def draw_shallow_curve():
+def draw_shallow_curve(width, height, background_color, foreground_color, stroke_thickness):
     """draw the shallow curve of the 'split' in a word pair"""
-    pass
+    canvas = draw_empty_cell(width, height, background_color)
+    # This draws a circle "off-screen," past the edge of the cell, in a
+    # way that creates the circular arc we're interested in.
+    # But then clip the path to the cell
+    clip = draw.ClipPath()
+    clip.append(draw.Rectangle(0, 0, width, height))
+    canvas.append(draw.Circle(width * 2, height * 5, height * 5, fill='none', stroke=foreground_color, stroke_width=stroke_thickness, clip_path=clip))
+    return canvas
 
 def draw_two_steep_curves():
     """draw the steep curves of neighboring 'splits' in word pairs"""
@@ -52,9 +66,13 @@ def main():
     empty_cell_canvas = draw_empty_cell(width, height, background_color)
     corner_cell_canvas = draw_corner_cell(width, height, background_color, foreground_color, stroke_thickness)
     edge_cell_canvas = draw_edge_cell(width, height, background_color, foreground_color, stroke_thickness)
+    steep_curve_cell_canvas = draw_steep_curve(width, height, background_color, foreground_color, stroke_thickness)
+    shallow_curve_cell_canvas = draw_shallow_curve(width, height, background_color, foreground_color, stroke_thickness)
     empty_cell_canvas.save_svg('empty_cell.svg')
     corner_cell_canvas.save_svg('corner_cell.svg')
     edge_cell_canvas.save_svg('edge_cell.svg')
+    steep_curve_cell_canvas.save_svg('steep_curve_cell.svg')
+    shallow_curve_cell_canvas.save_svg('shallow_curve_cell.svg')
 
 if __name__ == '__main__':
     main()
