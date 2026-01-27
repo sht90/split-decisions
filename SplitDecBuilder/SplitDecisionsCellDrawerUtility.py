@@ -52,9 +52,13 @@ def draw_shallow_curve(width, height, background_color, foreground_color, stroke
     canvas.append(draw.Circle(width * 2, height * 5, height * 5, fill='none', stroke=foreground_color, stroke_width=stroke_thickness, clip_path=clip))
     return canvas
 
-def draw_two_steep_curves():
+def draw_two_steep_curves(width, height, background_color, foreground_color, stroke_thickness):
     """draw the steep curves of neighboring 'splits' in word pairs"""
-    pass
+    canvas = draw_steep_curve(width, height, background_color, foreground_color, stroke_thickness)
+    clip = draw.ClipPath()
+    clip.append(draw.Rectangle(0, 0, width, height))
+    canvas.append(draw.Circle(width * -4, height * -2, height * 5, fill='none', stroke=foreground_color, stroke_width=stroke_thickness, clip_path=clip))
+    return canvas
 
 def main():
     """draw all cells and save them as svgs"""
@@ -68,11 +72,13 @@ def main():
     edge_cell_canvas = draw_edge_cell(width, height, background_color, foreground_color, stroke_thickness)
     steep_curve_cell_canvas = draw_steep_curve(width, height, background_color, foreground_color, stroke_thickness)
     shallow_curve_cell_canvas = draw_shallow_curve(width, height, background_color, foreground_color, stroke_thickness)
+    steep_curves_cell_canvas = draw_two_steep_curves(width, height, background_color, foreground_color, stroke_thickness)
     empty_cell_canvas.save_svg('empty_cell.svg')
     corner_cell_canvas.save_svg('corner_cell.svg')
     edge_cell_canvas.save_svg('edge_cell.svg')
     steep_curve_cell_canvas.save_svg('steep_curve_cell.svg')
     shallow_curve_cell_canvas.save_svg('shallow_curve_cell.svg')
+    steep_curves_cell_canvas.save_svg('steep_curves_cell.svg')
 
 if __name__ == '__main__':
     main()
