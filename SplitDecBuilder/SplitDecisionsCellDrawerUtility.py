@@ -24,9 +24,11 @@ def draw_corner_cell(width, height, background_color, foreground_color, stroke_t
     canvas.append(draw.Lines(height, 0, height, width, 0, width, close=False, fill='none', stroke=foreground_color, stroke_width=stroke_thickness))
     return canvas
 
-def draw_edge_cell():
+def draw_edge_cell(width, height, background_color, foreground_color, stroke_thickness):
     """draw the flat edge of a cell"""
-    pass
+    canvas = draw_empty_cell(width, height, background_color)
+    canvas.append(draw.Line(height, 0, height, width, stroke=foreground_color, stroke_width=stroke_thickness))
+    return canvas
 
 def draw_steep_curve():
     """draw the steep curve of the 'split' in a word pair"""
@@ -49,8 +51,10 @@ def main():
     stroke_thickness = 20
     empty_cell_canvas = draw_empty_cell(width, height, background_color)
     corner_cell_canvas = draw_corner_cell(width, height, background_color, foreground_color, stroke_thickness)
+    edge_cell_canvas = draw_edge_cell(width, height, background_color, foreground_color, stroke_thickness)
     empty_cell_canvas.save_svg('empty_cell.svg')
     corner_cell_canvas.save_svg('corner_cell.svg')
+    edge_cell_canvas.save_svg('edge_cell.svg')
 
 if __name__ == '__main__':
     main()
